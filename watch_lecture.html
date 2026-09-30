@@ -41,7 +41,6 @@
             display: block;
         }
 
-        /* العلامة المائية المحمية ذات الأولوية العليا */
         .watermark {
             position: absolute;
             color: rgba(255, 255, 255, 0.4);
@@ -172,17 +171,10 @@
                         }
                     }
 
-                    const url = data.videoUrl;
-                    const mediaBox = document.getElementById('mediaContainer');
-
-                    // حماية توليد مشغل Bunny برمجياً عبر Shadow DOM معزول
-                    mediaBox.innerHTML = '';
-                    const iframe = document.createElement('iframe');
-                    iframe.src = url;
-                    iframe.setAttribute('allow', 'accelerometer; autoplay; encrypted-media; picture-in-picture');
-                    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
-                    iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
-                    mediaBox.appendChild(iframe);
+                    const rawUrl = data.videoUrl;
+                    
+                    // تقنية إخفاء الرابط وتحويله إلى Blob HTML معزول عن برامج التنزيل
+                    injectEncryptedFrame(rawUrl);
 
                 } else {
                     document.getElementById('lectureTitle').innerText = subject + " - المحاضرة الأولى";
@@ -190,9 +182,42 @@
             } catch (e) { console.error(e); }
         }
 
+        function injectEncryptedFrame(targetUrl) {
+            const mediaBox = document.getElementById('mediaContainer');
+            mediaBox.innerHTML = '';
+
+            // إنشاء كود HTML متكامل وحقنه عبر Blob Object دون كشف الرابط في DOM الصفحة
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+                        iframe { width: 100%; height: 100%; border: 0; }
+                    </style>
+                </head>
+                <body>
+                    <iframe src="${targetUrl}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const blobUrl = URL.createObjectURL(blob);
+
+            const safeIframe = document.createElement('iframe');
+            safeIframe.src = blobUrl;
+            safeIframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
+            mediaBox.appendChild(safeIframe);
+
+            // مسح الـ Blob من الذاكرة بعد التشغيل فوراً لعدم استرجاعه
+            setTimeout(() => {
+                URL.revokeObjectURL(blobUrl);
+            }, 5000);
+        }
+
         loadLecture();
 
-        // حظر أدوات التفتيش والاختصارات
         document.addEventListener('keydown', (e) => {
             if (e.keyCode === 123 || 
                (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
