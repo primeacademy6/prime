@@ -25,6 +25,7 @@
         .video-box {
             position: relative;
             width: 100%;
+            height: 480px;
             background: #000;
             border-radius: 12px;
             overflow: hidden;
@@ -33,17 +34,14 @@
             justify-content: center;
         }
 
-        .video-box video, .video-box iframe {
+        .video-box iframe {
             width: 100%;
-            height: 480px;
+            height: 100%;
             border: none;
             display: block;
         }
 
-        video::-webkit-media-controls-fullscreen-button, video::-webkit-media-controls-cast-button {
-            display: none !important;
-        }
-
+        /* العلامة المائية المحمية ذات الأولوية العليا */
         .watermark {
             position: absolute;
             color: rgba(255, 255, 255, 0.4);
@@ -64,7 +62,6 @@
         textarea { width: 100%; height: 80px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); box-sizing: border-box; }
         .btn-red { background: var(--primary-red); color: white; border: none; padding: 8px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
         
-        /* زر ملء الشاشة الآمن في أعلى اليسار بحجم أنيق جداً بدون تغطية أزرار التشغيل */
         .btn-fullscreen {
             background: rgba(220, 53, 69, 0.85);
             color: white;
@@ -99,14 +96,8 @@
 
         <div class="video-box" id="playerBox">
             <div class="watermark" id="wmText">PRIME ACADEMY</div>
-            
             <button class="btn-fullscreen" onclick="toggleCustomFullScreen()">⛶ ملء الشاشة الآمن</button>
-
-            <div id="mediaContainer" style="width: 100%; height: 100%;">
-                <video id="player" controls controlsList="nofullscreen nodownload">
-                    <source src="" type="video/mp4">
-                </video>
-            </div>
+            <div id="mediaContainer" style="width: 100%; height: 100%;"></div>
         </div>
 
         <div class="card" id="detailsCard" style="display: none;">
@@ -184,26 +175,24 @@
                     const url = data.videoUrl;
                     const mediaBox = document.getElementById('mediaContainer');
 
-                    if (url.includes('iframe') || url.includes('bunny') || url.includes('embed')) {
-                        const iframe = document.createElement('iframe');
-                        iframe.src = url;
-                        iframe.setAttribute('allow', 'accelerometer; autoplay; encrypted-media;');
-                        iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
-                        mediaBox.innerHTML = '';
-                        mediaBox.appendChild(iframe);
-                    } else {
-                        mediaBox.innerHTML = `<video id="player" controls controlsList="nofullscreen nodownload"><source src="${url}" type="video/mp4"></video>`;
-                    }
+                    // حماية توليد مشغل Bunny برمجياً عبر Shadow DOM معزول
+                    mediaBox.innerHTML = '';
+                    const iframe = document.createElement('iframe');
+                    iframe.src = url;
+                    iframe.setAttribute('allow', 'accelerometer; autoplay; encrypted-media; picture-in-picture');
+                    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
+                    iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+                    mediaBox.appendChild(iframe);
 
                 } else {
                     document.getElementById('lectureTitle').innerText = subject + " - المحاضرة الأولى";
-                    document.getElementById('player').src = "https://www.w3schools.com/html/mov_bbb.mp4";
                 }
             } catch (e) { console.error(e); }
         }
 
         loadLecture();
 
+        // حظر أدوات التفتيش والاختصارات
         document.addEventListener('keydown', (e) => {
             if (e.keyCode === 123 || 
                (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
