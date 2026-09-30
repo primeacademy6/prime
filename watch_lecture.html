@@ -11,14 +11,48 @@
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--card-bg); border-bottom: 1px solid var(--border-color); }
         .brand-logo { font-size: 1.5rem; font-weight: 800; cursor: pointer; }
         .brand-logo .prime { color: var(--primary-red); }
-        .container { max-width: 850px; margin: 20px auto; padding: 0 15px; }
-        .video-box { position: relative; width: 100%; background: #000; border-radius: 10px; overflow: hidden; }
-        .video-box video { width: 100%; display: block; }
-        .watermark { position: absolute; color: rgba(255,255,255,0.25); font-size: 0.85rem; pointer-events: none; user-select: none; z-index: 99999; font-family: monospace; animation: moveWm 10s infinite alternate ease-in-out; }
-        @keyframes moveWm { 0% { top: 10%; left: 10%; } 100% { top: 40%; left: 70%; } }
+        .container { max-width: 880px; margin: 20px auto; padding: 0 15px; }
+
+        /* حاوية الفيديو المصممة لملء الشاشة مع العلامة المائية */
+        .video-box {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-box video, .video-box iframe {
+            width: 100%;
+            height: 480px;
+            border: none;
+            display: block;
+        }
+
+        /* العلامة المائية المحمية التي طافية دائماً */
+        .watermark {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.35);
+            font-size: 1rem;
+            font-weight: bold;
+            pointer-events: none;
+            user-select: none;
+            z-index: 2147483647 !important;
+            font-family: monospace;
+            direction: ltr;
+            padding: 4px 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+            transition: top 2s ease, left 2s ease;
+        }
+
         .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; margin-top: 20px; }
         textarea { width: 100%; height: 80px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); box-sizing: border-box; }
         .btn-red { background: var(--primary-red); color: white; border: none; padding: 8px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-fullscreen { background: rgba(0,0,0,0.6); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 6px; cursor: pointer; position: absolute; bottom: 12px; left: 12px; z-index: 2147483646; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -31,20 +65,36 @@
     </nav>
 
     <div class="container">
-        <h2 id="lectureTitle" style="margin-top:0; margin-bottom:15px;">جاري التحميل...</h2>
+        <h2 id="lectureTitle" style="margin-top:0; margin-bottom:5px;">جاري التحميل...</h2>
+        <p id="lectureChapter" style="color: var(--primary-red); font-weight: bold; margin-top:0; margin-bottom:15px;"></p>
 
-        <div class="video-box" id="vBox" oncontextmenu="return false;">
+        <!-- حاوية المشغل مع زر ملء الشاشة الخاص لمنع اختفاء العلامة المائية -->
+        <div class="video-box" id="playerBox" oncontextmenu="return false;">
             <div class="watermark" id="wmText">PRIME ACADEMY</div>
-            <video id="player" controls controlsList="nodownload">
-                <source src="" type="video/mp4">
-            </video>
+            
+            <div id="mediaContainer" style="width: 100%; height: 100%;">
+                <video id="player" controls controlsList="nodownload">
+                    <source src="" type="video/mp4">
+                </video>
+            </div>
+
+            <button class="btn-fullscreen" onclick="toggleCustomFullScreen()">⛶ ملء الشاشة الآمن</button>
         </div>
 
+        <!-- الوصف والمرفقات -->
+        <div class="card" id="detailsCard" style="display: none;">
+            <h4 style="margin-top: 0;">📄 تفاصيل الدرس والمرفقات</h4>
+            <p id="lecDescText" style="line-height: 1.6;"></p>
+            <a id="lecPdfLink" href="#" target="_blank" class="btn-red" style="display: inline-block; text-decoration: none; margin-top: 10px;">📥 تحميل ملزمة / مرفقات الدرس</a>
+        </div>
+
+        <!-- دفتر الملاحظات -->
         <div class="card">
-            <h4 style="margin-top:0;">📝 دفتر الملاحظات</h4>
+            <h4 style="margin-top:0;">📝 دفتر الملاحظات الخاص بك</h4>
             <textarea id="myNotes" placeholder="اكتب ملاحظاتك وتنسحفظ تلقائياً..."></textarea>
         </div>
 
+        <!-- الكويز -->
         <div class="card">
             <h4 style="margin-top:0;">🧠 كويز المحاضرة</h4>
             <p>س: اختر الإجابة الصحيحة للعملية المشروحة؟</p>
@@ -74,7 +124,17 @@
         const name = localStorage.getItem('prime_student_name') || user;
         const subject = localStorage.getItem('prime_selected_subject') || 'الرياضيات';
 
-        document.getElementById('wmText').innerText = name + " | " + user;
+        // وضع اسم اليوزر على العلامة المائية
+        const wm = document.getElementById('wmText');
+        wm.innerText = name + " | " + user;
+
+        // تحريك العلامة المائية عشوائياً كل بضعة ثواني لضمان حماية الشاشة
+        setInterval(() => {
+            const top = Math.floor(Math.random() * 75) + 10;
+            const left = Math.floor(Math.random() * 70) + 10;
+            wm.style.top = top + "%";
+            wm.style.left = left + "%";
+        }, 4000);
 
         async function loadLecture() {
             try {
@@ -84,18 +144,50 @@
                 if (!snap.empty) {
                     const data = snap.docs[0].data();
                     document.getElementById('lectureTitle').innerText = subject + " - " + data.title;
-                    document.getElementById('player').src = data.videoUrl;
+                    document.getElementById('lectureChapter').innerText = data.chapter || "الفصل الأول";
+
+                    // تفاصيل المرفقات والوصف
+                    if (data.desc || data.pdfUrl) {
+                        document.getElementById('detailsCard').style.display = "block";
+                        document.getElementById('lecDescText').innerText = data.desc || "لا يوجد وصف لهذه المحاضرة.";
+                        const pdfBtn = document.getElementById('lecPdfLink');
+                        if (data.pdfUrl) {
+                            pdfBtn.href = data.pdfUrl;
+                            pdfBtn.style.display = "inline-block";
+                        } else {
+                            pdfBtn.style.display = "none";
+                        }
+                    }
+
+                    // دعم مشغل بني ستريم أو التشغيل المباشر
+                    const url = data.videoUrl;
+                    const mediaBox = document.getElementById('mediaContainer');
+
+                    if (url.includes('iframe') || url.includes('bunny') || url.includes('embed')) {
+                        mediaBox.innerHTML = `<iframe src="${url}" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen></iframe>`;
+                    } else {
+                        mediaBox.innerHTML = `<video id="player" controls controlsList="nodownload"><source src="${url}" type="video/mp4"></video>`;
+                    }
+
                 } else {
                     document.getElementById('lectureTitle').innerText = subject + " - المحاضرة الأولى";
                     document.getElementById('player').src = "https://www.w3schools.com/html/mov_bbb.mp4";
                 }
-            } catch (e) {
-                document.getElementById('lectureTitle').innerText = subject + " - المحاضرة الأولى";
-                document.getElementById('player').src = "https://www.w3schools.com/html/mov_bbb.mp4";
-            }
+            } catch (e) { console.error(e); }
         }
 
         loadLecture();
+
+        // زر ملء الشاشة الآمن الذي يبقي العلامة المائية طافية بوضع Fullscreen
+        window.toggleCustomFullScreen = function() {
+            const box = document.getElementById('playerBox');
+            if (!document.fullscreenElement) {
+                if (box.requestFullscreen) { box.requestFullscreen(); }
+                else if (box.webkitRequestFullscreen) { box.webkitRequestFullscreen(); }
+            } else {
+                if (document.exitFullscreen) { document.exitFullscreen(); }
+            }
+        };
 
         const notes = document.getElementById('myNotes');
         notes.value = localStorage.getItem('notes_' + subject) || '';
