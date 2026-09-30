@@ -3,102 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل دخول التدريسي - PRIME ACADEMY</title>
+    <title>دخول التدريسي - PRIME ACADEMY</title>
     <style>
-        :root {
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-color: #1a1a1a;
-            --primary-red: #dc3545;
-            --border-color: #e9ecef;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: system-ui, -apple-system, sans-serif;
-            margin: 0;
-            direction: rtl;
-        }
-
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            background-color: var(--card-bg);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .brand-logo {
-            font-size: 1.5rem;
-            font-weight: 800;
-            text-decoration: none;
-        }
+        :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #1a1a1a; --primary-red: #dc3545; --border-color: #e9ecef; }
+        body { background: var(--bg-color); color: var(--text-color); font-family: system-ui, sans-serif; margin: 0; direction: rtl; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--card-bg); border-bottom: 1px solid var(--border-color); }
+        .brand-logo { font-size: 1.5rem; font-weight: 800; cursor: pointer; }
         .brand-logo .prime { color: var(--primary-red); }
-        .brand-logo .academy { color: var(--text-color); }
-
-        .form-container {
-            max-width: 400px;
-            margin: 60px auto;
-            padding: 25px;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0 16px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-
-        .btn-submit {
-            width: 100%;
-            background: #1a1a1a;
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .btn-submit:hover {
-            background: #333333;
-        }
+        .container { max-width: 400px; margin: 60px auto; padding: 0 15px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        input { width: 100%; padding: 11px; margin: 6px 0 16px; border-radius: 6px; border: 1px solid var(--border-color); }
+        .btn-black { background: #1a1a1a; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
-        <a href="index.html" class="brand-logo">
-            <span class="prime">PRIME</span> <span class="academy">ACADEMY</span>
-        </a>
+        <span class="brand-logo" onclick="location.href='index.html'">
+            <span class="prime">PRIME</span> ACADEMY
+        </span>
     </nav>
 
-    <div class="form-container">
-        <h3 style="margin-top: 0; text-align: center;">دخول التدريسي</h3>
-        <form id="teacherLoginForm">
-            <label>اسم المستخدم / رمز الأستاذ:</label>
-            <input type="text" id="teacherId" required placeholder="ادخل اسم المستخدم">
+    <div class="container">
+        <div class="card">
+            <h3 style="margin-top:0; text-align:center;">دخول التدريسي</h3>
+            <form id="loginForm">
+                <label>اسم المستخدم:</label>
+                <input type="text" id="tUser" required placeholder="admin">
 
-            <label>كلمة المرور:</label>
-            <input type="password" id="teacherPass" required placeholder="••••••••">
+                <label>كلمة المرور:</label>
+                <input type="password" id="tPass" required placeholder="••••••••">
 
-            <button type="submit" class="btn-submit">دخول للوحة التحكم</button>
-        </form>
+                <button type="submit" class="btn-black">دخول للوحة التحكم</button>
+            </form>
+        </div>
     </div>
 
     <script>
-        document.getElementById('teacherLoginForm').addEventListener('submit', (e) => {
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            // التوجيه المباشر إلى لوحة التدريسي
-            window.location.href = "teacher_dashboard.html";
+            const u = document.getElementById('tUser').value;
+            const p = document.getElementById('tPass').value;
+
+            if (u === "admin" && p === "prime123") {
+                localStorage.setItem('prime_teacher_auth', 'true');
+                location.href = "teacher_dashboard.html";
+            } else {
+                alert("اسم المستخدم أو كلمة المرور غير صحيحة!");
+            }
         });
     </script>
 </body>
