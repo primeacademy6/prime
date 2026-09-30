@@ -5,9 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مشاهدة المحاضرة - PRIME ACADEMY</title>
     <style>
-        :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #1a1a1a; --primary-red: #dc3545; --border-color: #e9ecef; }
-        [data-theme="dark"] { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #f1f1f1; --border-color: #2d2d2d; }
+        :root { 
+            --bg-color: #f8f9fa; 
+            --card-bg: #ffffff; 
+            --text-color: #1a1a1a; 
+            --primary-red: #dc3545; 
+            --border-color: #e9ecef; 
+        }
         
+        [data-theme="dark"] { 
+            --bg-color: #121212; 
+            --card-bg: #1e1e1e; 
+            --text-color: #f1f1f1; 
+            --border-color: #2d2d2d; 
+        }
+        
+        /* حظر تحديد النصوص والنسخ */
         * {
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -16,12 +29,38 @@
             box-sizing: border-box;
         }
 
-        body { background: var(--bg-color); color: var(--text-color); font-family: system-ui, sans-serif; margin: 0; direction: rtl; }
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--card-bg); border-bottom: 1px solid var(--border-color); }
-        .brand-logo { font-size: 1.5rem; font-weight: 800; cursor: pointer; }
-        .brand-logo .prime { color: var(--primary-red); }
-        .container { max-width: 880px; margin: 20px auto; padding: 0 15px; }
+        body { 
+            background: var(--bg-color); 
+            color: var(--text-color); 
+            font-family: system-ui, -apple-system, sans-serif; 
+            margin: 0; 
+            direction: rtl; 
+        }
 
+        .navbar { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 1rem 2rem; 
+            background: var(--card-bg); 
+            border-bottom: 1px solid var(--border-color); 
+        }
+
+        .brand-logo { 
+            font-size: 1.5rem; 
+            font-weight: 800; 
+            cursor: pointer; 
+        }
+
+        .brand-logo .prime { color: var(--primary-red); }
+
+        .container { 
+            max-width: 880px; 
+            margin: 20px auto; 
+            padding: 0 15px; 
+        }
+
+        /* حاوية الفيديو الرئيسية */
         .video-box {
             position: relative;
             width: 100%;
@@ -34,13 +73,14 @@
             justify-content: center;
         }
 
-        .video-box iframe {
+        .video-box iframe, .video-box video {
             width: 100%;
             height: 100%;
             border: none;
             display: block;
         }
 
+        /* العلامة المائية المحمية ذات الأولوية الشاملة */
         .watermark {
             position: absolute;
             color: rgba(255, 255, 255, 0.4);
@@ -57,10 +97,36 @@
             transition: top 2.5s ease, left 2.5s ease;
         }
 
-        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; margin-top: 20px; }
-        textarea { width: 100%; height: 80px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); box-sizing: border-box; }
-        .btn-red { background: var(--primary-red); color: white; border: none; padding: 8px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border-color); 
+            border-radius: 10px; 
+            padding: 20px; 
+            margin-top: 20px; 
+        }
+
+        textarea { 
+            width: 100%; 
+            height: 80px; 
+            padding: 10px; 
+            border-radius: 6px; 
+            border: 1px solid var(--border-color); 
+            background: var(--bg-color); 
+            color: var(--text-color); 
+            box-sizing: border-box; 
+        }
+
+        .btn-red { 
+            background: var(--primary-red); 
+            color: white; 
+            border: none; 
+            padding: 8px 20px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
+        }
         
+        /* زر ملء الشاشة الآمن والوحيد في أعلى اليسار */
         .btn-fullscreen {
             background: rgba(220, 53, 69, 0.85);
             color: white;
@@ -77,7 +143,10 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.4);
             transition: background 0.2s;
         }
-        .btn-fullscreen:hover { background: var(--primary-red); }
+
+        .btn-fullscreen:hover { 
+            background: var(--primary-red); 
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -93,23 +162,27 @@
         <h2 id="lectureTitle" style="margin-top:0; margin-bottom:5px;">جاري التحميل...</h2>
         <p id="lectureChapter" style="color: var(--primary-red); font-weight: bold; margin-top:0; margin-bottom:15px;"></p>
 
+        <!-- حاوية المشغل مع العلامة المائية وزر الشاشة الكاملة الآمن -->
         <div class="video-box" id="playerBox">
             <div class="watermark" id="wmText">PRIME ACADEMY</div>
             <button class="btn-fullscreen" onclick="toggleCustomFullScreen()">⛶ ملء الشاشة الآمن</button>
             <div id="mediaContainer" style="width: 100%; height: 100%;"></div>
         </div>
 
+        <!-- قسم التفاصيل والمرفقات -->
         <div class="card" id="detailsCard" style="display: none;">
             <h4 style="margin-top: 0;">📄 تفاصيل الدرس والمرفقات</h4>
             <p id="lecDescText" style="line-height: 1.6;"></p>
             <a id="lecPdfLink" href="#" target="_blank" class="btn-red" style="display: inline-block; text-decoration: none; margin-top: 10px;">📥 تحميل ملزمة / مرفقات الدرس</a>
         </div>
 
+        <!-- دفتر الملاحظات -->
         <div class="card">
             <h4 style="margin-top:0;">📝 دفتر الملاحظات الخاص بك</h4>
             <textarea id="myNotes" placeholder="اكتب ملاحظاتك وتنسحفظ تلقائياً..."></textarea>
         </div>
 
+        <!-- الكويز السريع -->
         <div class="card">
             <h4 style="margin-top:0;">🧠 كويز المحاضرة</h4>
             <p>س: اختر الإجابة الصحيحة للعملية المشروحة؟</p>
@@ -119,6 +192,7 @@
         </div>
     </div>
 
+    <!-- كود ربط الفايربيس وتجهيز المشغل المباشر والمحمي -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -139,9 +213,11 @@
         const name = localStorage.getItem('prime_student_name') || user;
         const subject = localStorage.getItem('prime_selected_subject') || 'الرياضيات';
 
+        // تعيين بيانات الطالب للعلامة المائية
         const wm = document.getElementById('wmText');
         wm.innerText = name + " | " + user;
 
+        // تحريك العلامة المائية حركياً لمنع التسجيل
         setInterval(() => {
             const top = Math.floor(Math.random() * 70) + 15;
             const left = Math.floor(Math.random() * 60) + 15;
@@ -171,10 +247,15 @@
                         }
                     }
 
-                    const rawUrl = data.videoUrl;
-                    
-                    // تقنية إخفاء الرابط وتحويله إلى Blob HTML معزول عن برامج التنزيل
-                    injectEncryptedFrame(rawUrl);
+                    const url = data.videoUrl;
+                    const mediaBox = document.getElementById('mediaContainer');
+
+                    // تضمين مشغل Bunny المشفر والمباشر
+                    if (url.includes('iframe') || url.includes('bunny') || url.includes('embed')) {
+                        mediaBox.innerHTML = `<iframe src="${url}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture;" allowfullscreen style="width:100%; height:100%; border:0;"></iframe>`;
+                    } else {
+                        mediaBox.innerHTML = `<video id="player" controls controlsList="nofullscreen nodownload"><source src="${url}" type="video/mp4"></video>`;
+                    }
 
                 } else {
                     document.getElementById('lectureTitle').innerText = subject + " - المحاضرة الأولى";
@@ -182,42 +263,9 @@
             } catch (e) { console.error(e); }
         }
 
-        function injectEncryptedFrame(targetUrl) {
-            const mediaBox = document.getElementById('mediaContainer');
-            mediaBox.innerHTML = '';
-
-            // إنشاء كود HTML متكامل وحقنه عبر Blob Object دون كشف الرابط في DOM الصفحة
-            const htmlContent = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
-                        iframe { width: 100%; height: 100%; border: 0; }
-                    </style>
-                </head>
-                <body>
-                    <iframe src="${targetUrl}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-                </body>
-                </html>
-            `;
-
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            const blobUrl = URL.createObjectURL(blob);
-
-            const safeIframe = document.createElement('iframe');
-            safeIframe.src = blobUrl;
-            safeIframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
-            mediaBox.appendChild(safeIframe);
-
-            // مسح الـ Blob من الذاكرة بعد التشغيل فوراً لعدم استرجاعه
-            setTimeout(() => {
-                URL.revokeObjectURL(blobUrl);
-            }, 5000);
-        }
-
         loadLecture();
 
+        // تعطيل زر F12 واختصارات المطورين
         document.addEventListener('keydown', (e) => {
             if (e.keyCode === 123 || 
                (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
@@ -227,6 +275,7 @@
             }
         });
 
+        // زر ملء الشاشة الذي يدمج العلامة المائية بداخل الشاشة المكبرة
         window.toggleCustomFullScreen = function() {
             const box = document.getElementById('playerBox');
             if (!document.fullscreenElement) {
@@ -237,6 +286,7 @@
             }
         };
 
+        // حفظ دفتر الملاحظات
         const notes = document.getElementById('myNotes');
         notes.value = localStorage.getItem('notes_' + subject) || '';
         notes.addEventListener('input', () => {
