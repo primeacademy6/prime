@@ -23,7 +23,7 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: system-ui, sans-serif;
+            font-family: system-ui, -apple-system, sans-serif;
             margin: 0;
             direction: rtl;
         }
@@ -53,8 +53,9 @@
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 15px;
+            margin-top: 20px;
         }
 
         .subject-card {
@@ -68,10 +69,22 @@
             cursor: pointer;
             text-decoration: none;
             color: var(--text-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: border-color 0.2s, transform 0.2s;
         }
 
         .subject-card:hover {
             border-color: var(--primary-red);
+            transform: translateY(-2px);
+        }
+
+        .theme-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -81,66 +94,37 @@
         <a href="index.html" class="brand-logo">
             <span class="prime">PRIME</span> <span class="academy">ACADEMY</span>
         </a>
-        <div>
-            <span id="studentNameDisplay" style="margin-left: 15px; font-weight: 600;"></span>
-            <a href="index.html" style="color: var(--primary-red); text-decoration: none; font-weight: bold;">خروج</a>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <span id="studentNameDisplay" style="font-weight: 600;"></span>
+            <button class="theme-btn" onclick="toggleTheme()">🌙 الوضع الليلي</button>
+            <a href="student_login.html" style="color: var(--primary-red); text-decoration: none; font-weight: bold;">تسجيل خروج</a>
         </div>
     </nav>
 
     <div class="container">
         <h3>المواد المفعلة بحسابك</h3>
         <div class="grid" id="allowedSubjects">
-            <!-- تتولد المواد المسموحة فقط برمجياً -->
+            <div class="subject-card" onclick="openSubject('الرياضيات')">الرياضيات</div>
+            <div class="subject-card" onclick="openSubject('الفيزياء')">الفيزياء</div>
+            <div class="subject-card" onclick="openSubject('الكيمياء')">الكيمياء</div>
+            <div class="subject-card" onclick="openSubject('الأحياء')">الأحياء</div>
         </div>
     </div>
 
-    <script type="module">
-        import { db } from './assets/js/firebase-config.js';
-        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const studentId = localStorage.getItem('current_student_id') || 'student1';
+    <script>
+        // قراءة اسم الطالب المحفوظ عند الدخول
+        const studentId = localStorage.getItem('current_student_id') || 'طالب';
         document.getElementById('studentNameDisplay').innerText = "الطالب: " + studentId;
 
-        // التحقق من المواد المفعلة للطالب من الفايربيس
-        async function loadStudentCourses() {
-            const container = document.getElementById('allowedSubjects');
-            try {
-                const docRef = doc(db, "students", studentId);
-                const docSnap = await getDoc(docRef);
-
-                let courses = ["الرياضيات", "الفيزياء"]; // الافتراضي للتجربة
-
-                if (docSnap.exists() && docSnap.data().courses) {
-                    courses = docSnap.data().courses;
-                }
-
-                if (courses.length === 0) {
-                    container.innerHTML = "<p>لا توجد مواد مفعلة بحسابك حالياً. راجع التدريسي.</p>";
-                    return;
-                }
-
-                container.innerHTML = "";
-                courses.forEach(sub => {
-                    container.innerHTML += `
-                        <div class="subject-card" onclick="openSubject('${sub}')">
-                            ${sub}
-                        </div>
-                    `;
-                });
-            } catch (e) {
-                container.innerHTML = `
-                    <div class="subject-card" onclick="openSubject('الرياضيات')">الرياضيات</div>
-                    <div class="subject-card" onclick="openSubject('الفيزياء')">الفيزياء</div>
-                `;
-            }
+        function openSubject(subjectName) {
+            localStorage.setItem('selected_subject', subjectName);
+            window.location.href = "watch_lecture.html";
         }
 
-        window.openSubject = function(sub) {
-            localStorage.setItem('selected_subject', sub);
-            window.location.href = "watch_lecture.html";
-        };
-
-        loadStudentCourses();
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        }
     </script>
 </body>
 </html>
