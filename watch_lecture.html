@@ -5,161 +5,102 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مشاهدة المحاضرة - PRIME ACADEMY</title>
     <style>
-        :root {
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-color: #1a1a1a;
-            --primary-red: #dc3545;
-            --border-color: #e9ecef;
-        }
-
-        [data-theme="dark"] {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #f1f1f1;
-            --border-color: #2d2d2d;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: system-ui, sans-serif;
-            margin: 0;
-            direction: rtl;
-        }
-
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            background-color: var(--card-bg);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .brand-logo {
-            font-size: 1.5rem;
-            font-weight: 800;
-            text-decoration: none;
-        }
+        :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #1a1a1a; --primary-red: #dc3545; --border-color: #e9ecef; }
+        [data-theme="dark"] { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #f1f1f1; --border-color: #2d2d2d; }
+        body { background: var(--bg-color); color: var(--text-color); font-family: system-ui, sans-serif; margin: 0; direction: rtl; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--card-bg); border-bottom: 1px solid var(--border-color); }
+        .brand-logo { font-size: 1.5rem; font-weight: 800; cursor: pointer; }
         .brand-logo .prime { color: var(--primary-red); }
-        .brand-logo .academy { color: var(--text-color); }
-
-        .container {
-            max-width: 850px;
-            margin: 20px auto;
-            padding: 0 15px;
-        }
-
-        .video-box {
-            position: relative;
-            width: 100%;
-            background: #000;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .video-box video {
-            width: 100%;
-            display: block;
-        }
-
-        .watermark {
-            position: absolute;
-            color: rgba(255, 255, 255, 0.2);
-            font-size: 0.8rem;
-            pointer-events: none;
-            user-select: none;
-            z-index: 10;
-            font-family: monospace;
-            animation: moveWm 10s infinite alternate ease-in-out;
-        }
-
-        @keyframes moveWm {
-            0% { top: 10%; left: 10%; }
-            100% { top: 40%; left: 70%; }
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-
-        textarea {
-            width: 100%;
-            height: 80px;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-color);
-            color: var(--text-color);
-            box-sizing: border-box;
-        }
-
-        .btn-submit {
-            background: var(--primary-red);
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
+        .container { max-width: 850px; margin: 20px auto; padding: 0 15px; }
+        .video-box { position: relative; width: 100%; background: #000; border-radius: 10px; overflow: hidden; }
+        .video-box video { width: 100%; display: block; }
+        .watermark { position: absolute; color: rgba(255,255,255,0.25); font-size: 0.85rem; pointer-events: none; user-select: none; z-index: 99999; font-family: monospace; animation: moveWm 10s infinite alternate ease-in-out; }
+        @keyframes moveWm { 0% { top: 10%; left: 10%; } 100% { top: 40%; left: 70%; } }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; margin-top: 20px; }
+        textarea { width: 100%; height: 80px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); box-sizing: border-box; }
+        .btn-red { background: var(--primary-red); color: white; border: none; padding: 8px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
-        <a href="student_dashboard.html" class="brand-logo">
-            <span class="prime">PRIME</span> <span class="academy">ACADEMY</span>
-        </a>
-        <a href="student_dashboard.html" style="color: var(--primary-red); text-decoration: none; font-weight: bold;">← رجوع للمواد</a>
+        <span class="brand-logo" onclick="location.href='student_dashboard.html'">
+            <span class="prime">PRIME</span> ACADEMY
+        </span>
+        <button class="btn-red" onclick="location.href='student_dashboard.html'">← رجوع للمواد</button>
     </nav>
 
     <div class="container">
-        <h2 id="lectureTitle" style="margin-top: 0; margin-bottom: 15px;">المحاضرة الأولى</h2>
+        <h2 id="lectureTitle" style="margin-top:0; margin-bottom:15px;">جاري التحميل...</h2>
 
-        <!-- مشغل الفيديو والوترمارك فقط -->
-        <div class="video-box" oncontextmenu="return false;">
+        <div class="video-box" id="vBox" oncontextmenu="return false;">
             <div class="watermark" id="wmText">PRIME ACADEMY</div>
             <video id="player" controls controlsList="nodownload">
-                <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+                <source src="" type="video/mp4">
             </video>
         </div>
 
-        <!-- دفتر الملاحظات مباشرة -->
         <div class="card">
-            <h4 style="margin-top: 0;">📝 دفتر الملاحظات</h4>
+            <h4 style="margin-top:0;">📝 دفتر الملاحظات</h4>
             <textarea id="myNotes" placeholder="اكتب ملاحظاتك وتنسحفظ تلقائياً..."></textarea>
         </div>
 
-        <!-- الكويز السريع -->
         <div class="card">
-            <h4 style="margin-top: 0;">🧠 كويز المحاضرة</h4>
+            <h4 style="margin-top:0;">🧠 كويز المحاضرة</h4>
             <p>س: اختر الإجابة الصحيحة للعملية المشروحة؟</p>
             <label><input type="radio" name="q" value="A"> الاختيار الأول</label><br>
             <label><input type="radio" name="q" value="B"> الاختيار الثاني</label><br><br>
-            <button class="btn-submit" onclick="alert('تم إرسال إجابتك!')">إرسال الإجابة</button>
+            <button class="btn-red" onclick="alert('تم إرسال الإجابة!')">إرسال الإجابة</button>
         </div>
     </div>
 
-    <script>
-        const studentId = localStorage.getItem('current_student_id') || 'طالب';
-        document.getElementById('wmText').innerText = "PRIME ACADEMY | " + studentId;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const sub = localStorage.getItem('selected_subject');
-        if (sub) {
-            document.getElementById('lectureTitle').innerText = sub + " - المحاضرة الأولى";
+        const firebaseConfig = {
+            apiKey: "AIzaSyBApoSZ-HXy9kd07tSJfuRdWkJcrbQVYf0",
+            authDomain: "qmove1.firebaseapp.com",
+            projectId: "qmove1",
+            storageBucket: "qmove1.firebasestorage.app",
+            messagingSenderId: "166464805371",
+            appId: "1:166464805371:web:d65b0cb8b141e4b894935e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const user = localStorage.getItem('prime_student_user') || 'طالب';
+        const name = localStorage.getItem('prime_student_name') || user;
+        const subject = localStorage.getItem('prime_selected_subject') || 'الرياضيات';
+
+        document.getElementById('wmText').innerText = name + " | " + user;
+
+        async function loadLecture() {
+            try {
+                const q = query(collection(db, "lectures"), where("subject", "==", subject));
+                const snap = await getDocs(q);
+
+                if (!snap.empty) {
+                    const data = snap.docs[0].data();
+                    document.getElementById('lectureTitle').innerText = subject + " - " + data.title;
+                    document.getElementById('player').src = data.videoUrl;
+                } else {
+                    document.getElementById('lectureTitle').innerText = subject + " - المحاضرة الأولى";
+                    document.getElementById('player').src = "https://www.w3schools.com/html/mov_bbb.mp4";
+                }
+            } catch (e) {
+                document.getElementById('lectureTitle').innerText = subject + " - المحاضرة الأولى";
+                document.getElementById('player').src = "https://www.w3schools.com/html/mov_bbb.mp4";
+            }
         }
 
-        // حفظ الملاحظات
+        loadLecture();
+
         const notes = document.getElementById('myNotes');
-        notes.value = localStorage.getItem('notes_' + sub) || '';
+        notes.value = localStorage.getItem('notes_' + subject) || '';
         notes.addEventListener('input', () => {
-            localStorage.setItem('notes_' + sub, notes.value);
+            localStorage.setItem('notes_' + subject, notes.value);
         });
     </script>
 </body>
