@@ -20,7 +20,6 @@
             --border-color: #2d2d2d; 
         }
         
-        /* حظر تحديد النصوص والنسخ */
         * {
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -60,7 +59,6 @@
             padding: 0 15px; 
         }
 
-        /* حاوية الفيديو الرئيسية */
         .video-box {
             position: relative;
             width: 100%;
@@ -80,7 +78,7 @@
             display: block;
         }
 
-        /* العلامة المائية المحمية ذات الأولوية الشاملة */
+        /* العلامة المائية المحمية */
         .watermark {
             position: absolute;
             color: rgba(255, 255, 255, 0.4);
@@ -126,7 +124,6 @@
             cursor: pointer; 
         }
         
-        /* زر ملء الشاشة الآمن والوحيد في أعلى اليسار */
         .btn-fullscreen {
             background: rgba(220, 53, 69, 0.85);
             color: white;
@@ -162,27 +159,23 @@
         <h2 id="lectureTitle" style="margin-top:0; margin-bottom:5px;">جاري التحميل...</h2>
         <p id="lectureChapter" style="color: var(--primary-red); font-weight: bold; margin-top:0; margin-bottom:15px;"></p>
 
-        <!-- حاوية المشغل مع العلامة المائية وزر الشاشة الكاملة الآمن -->
         <div class="video-box" id="playerBox">
             <div class="watermark" id="wmText">PRIME ACADEMY</div>
             <button class="btn-fullscreen" onclick="toggleCustomFullScreen()">⛶ ملء الشاشة الآمن</button>
             <div id="mediaContainer" style="width: 100%; height: 100%;"></div>
         </div>
 
-        <!-- قسم التفاصيل والمرفقات -->
         <div class="card" id="detailsCard" style="display: none;">
             <h4 style="margin-top: 0;">📄 تفاصيل الدرس والمرفقات</h4>
             <p id="lecDescText" style="line-height: 1.6;"></p>
             <a id="lecPdfLink" href="#" target="_blank" class="btn-red" style="display: inline-block; text-decoration: none; margin-top: 10px;">📥 تحميل ملزمة / مرفقات الدرس</a>
         </div>
 
-        <!-- دفتر الملاحظات -->
         <div class="card">
             <h4 style="margin-top:0;">📝 دفتر الملاحظات الخاص بك</h4>
             <textarea id="myNotes" placeholder="اكتب ملاحظاتك وتنسحفظ تلقائياً..."></textarea>
         </div>
 
-        <!-- الكويز السريع -->
         <div class="card">
             <h4 style="margin-top:0;">🧠 كويز المحاضرة</h4>
             <p>س: اختر الإجابة الصحيحة للعملية المشروحة؟</p>
@@ -192,7 +185,6 @@
         </div>
     </div>
 
-    <!-- كود ربط الفايربيس وتجهيز المشغل المباشر والمحمي -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -213,11 +205,9 @@
         const name = localStorage.getItem('prime_student_name') || user;
         const subject = localStorage.getItem('prime_selected_subject') || 'الرياضيات';
 
-        // تعيين بيانات الطالب للعلامة المائية
         const wm = document.getElementById('wmText');
         wm.innerText = name + " | " + user;
 
-        // تحريك العلامة المائية حركياً لمنع التسجيل
         setInterval(() => {
             const top = Math.floor(Math.random() * 70) + 15;
             const left = Math.floor(Math.random() * 60) + 15;
@@ -250,8 +240,8 @@
                     const url = data.videoUrl;
                     const mediaBox = document.getElementById('mediaContainer');
 
-                    // تضمين مشغل Bunny المشفر والمباشر
-                    if (url.includes('iframe') || url.includes('bunny') || url.includes('embed')) {
+                    // فحص شامل لروابط الـ Embed والـ VdoCipher المباشرة
+                    if (url.includes('iframe') || url.includes('bunny') || url.includes('embed') || url.includes('vdocipher')) {
                         mediaBox.innerHTML = `<iframe src="${url}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture;" allowfullscreen style="width:100%; height:100%; border:0;"></iframe>`;
                     } else {
                         mediaBox.innerHTML = `<video id="player" controls controlsList="nofullscreen nodownload"><source src="${url}" type="video/mp4"></video>`;
@@ -265,7 +255,6 @@
 
         loadLecture();
 
-        // تعطيل زر F12 واختصارات المطورين
         document.addEventListener('keydown', (e) => {
             if (e.keyCode === 123 || 
                (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
@@ -275,7 +264,6 @@
             }
         });
 
-        // زر ملء الشاشة الذي يدمج العلامة المائية بداخل الشاشة المكبرة
         window.toggleCustomFullScreen = function() {
             const box = document.getElementById('playerBox');
             if (!document.fullscreenElement) {
@@ -286,7 +274,6 @@
             }
         };
 
-        // حفظ دفتر الملاحظات
         const notes = document.getElementById('myNotes');
         notes.value = localStorage.getItem('notes_' + subject) || '';
         notes.addEventListener('input', () => {
