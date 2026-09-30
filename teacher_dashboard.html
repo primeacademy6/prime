@@ -75,19 +75,19 @@
             </div>
         </div>
 
-        <!-- 4. رفع المحاضرات -->
+        <!-- 4. إضافة محاضرة جديدة عبر رابط الفيديو -->
         <div class="card">
-            <h3>🎥 رفع محاضرة جديدة</h3>
+            <h3>🎥 إضافة محاضرة جديدة</h3>
             <label>اختر المادة:</label>
             <select id="lectureSubjectSelect"></select>
 
             <label>عنوان المحاضرة:</label>
             <input type="text" id="lecTitle" placeholder="مثال: المحاضرة 1 - الأساسيات">
 
-            <label>اختر الفيديو:</label>
-            <input type="file" id="lecFile" accept="video/*">
+            <label>رابط الفيديو (Google Drive / رابط مباشر):</label>
+            <input type="text" id="lecUrl" placeholder="ضع رابط الفيديو هنا">
 
-            <button class="btn-red" id="uploadLecBtn">رفع المحاضرة للسحاب</button>
+            <button class="btn-red" id="uploadLecBtn">حفظ ونشر المحاضرة</button>
             <p id="uploadStatus" style="font-weight: bold; margin-top: 10px;"></p>
         </div>
 
@@ -96,7 +96,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, getDoc, setDoc, getDocs, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBApoSZ-HXy9kd07tSJfuRdWkJcrbQVYf0",
@@ -109,7 +108,6 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const storage = getStorage(app);
 
         if (!localStorage.getItem('prime_teacher_auth')) {
             location.href = "teacher_login.html";
@@ -235,32 +233,29 @@
             }
         };
 
+        // حفظ المحاضرة برابط الفيديو
         document.getElementById('uploadLecBtn').addEventListener('click', async () => {
             const sub = document.getElementById('lectureSubjectSelect').value;
             const title = document.getElementById('lecTitle').value.trim();
-            const file = document.getElementById('lecFile').files[0];
+            const videoUrl = document.getElementById('lecUrl').value.trim();
             const status = document.getElementById('uploadStatus');
 
-            if (!title || !file) {
+            if (!title || !videoUrl) {
                 status.style.color = "red";
-                status.innerText = "يرجى كتابة العنوان واختيار الفيديو!";
+                status.innerText = "يرجى كتابة العنوان ووضع رابط الفيديو!";
                 return;
             }
 
             status.style.color = "blue";
-            status.innerText = "جاري رفع الفيديو إلى السحاب...";
+            status.innerText = "جاري الحفظ...";
 
             try {
-                const storageRef = ref(storage, 'lectures/' + Date.now() + '_' + file.name);
-                await uploadBytes(storageRef, file);
-                const videoUrl = await getDownloadURL(storageRef);
-
                 await addDoc(collection(db, "lectures"), { subject: sub, title: title, videoUrl: videoUrl, createdAt: new Date() });
 
                 status.style.color = "green";
-                status.innerText = "تم رفع المحاضرة وحفظها بنجاح!";
+                status.innerText = "تم حفظ ونشر المحاضرة بنجاح!";
                 document.getElementById('lecTitle').value = "";
-                document.getElementById('lecFile').value = "";
+                document.getElementById('lecUrl').value = "";
             } catch (e) { status.style.color = "red"; status.innerText = e.message; }
         });
 
