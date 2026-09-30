@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRIME ACADEMY</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #1a1a1a;
+            --primary-red: #dc3545;
+            --border-color: #e9ecef;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #f1f1f1;
+            --border-color: #2d2d2d;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            direction: rtl;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand-logo {
+            font-size: 1.6rem;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .brand-logo .prime { color: var(--primary-red); }
+        .brand-logo .academy { color: var(--text-color); }
+
+        .theme-btn {
+            cursor: pointer;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 6px 16px;
+            border-radius: 20px;
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .portal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px 30px;
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .btn-portal {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin: 12px 0;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            text-decoration: none;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+
+        .btn-student {
+            background-color: var(--primary-red);
+            color: #ffffff;
+            border: none;
+        }
+
+        .btn-teacher {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="index.html" class="brand-logo">
+            <span class="prime">PRIME</span> <span class="academy">ACADEMY</span>
+        </a>
+        <button class="theme-btn" id="themeToggle">🌙 الوضع الليلي</button>
+    </nav>
+
+    <div class="main-container">
+        <div class="portal-card">
+            <h2 style="margin-top: 0; margin-bottom: 30px;">اختر بوابة الدخول</h2>
+            
+            <a href="student_login.html" class="btn-portal btn-student">بوابة الطالب</a>
+            <a href="teacher_login.html" class="btn-portal btn-teacher">بوابة التدريسي</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const html = document.documentElement;
+            html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        });
+    </script>
+</body>
+</html>
