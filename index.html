@@ -3,54 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRIME ACADEMY</title>
+    <title>موادي - PRIME ACADEMY</title>
     <style>
-        :root {
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-color: #1a1a1a;
-            --primary-red: #dc3545;
-            --border-color: #e9ecef;
-        }
-        [data-theme="dark"] {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #f1f1f1;
-            --border-color: #2d2d2d;
-        }
-        * { box-sizing: border-box; transition: background 0.2s, color 0.2s; }
-        body { background: var(--bg-color); color: var(--text-color); font-family: system-ui, sans-serif; margin: 0; padding: 0; direction: rtl; }
+        :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #1a1a1a; --primary-red: #dc3545; --border-color: #e9ecef; }
+        [data-theme="dark"] { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #f1f1f1; --border-color: #2d2d2d; }
+        body { background: var(--bg-color); color: var(--text-color); font-family: system-ui, sans-serif; margin: 0; direction: rtl; }
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--card-bg); border-bottom: 1px solid var(--border-color); }
-        .brand-logo { font-size: 1.6rem; font-weight: 800; text-decoration: none; cursor: pointer; }
+        .brand-logo { font-size: 1.5rem; font-weight: 800; cursor: pointer; }
         .brand-logo .prime { color: var(--primary-red); }
-        .brand-logo .academy { color: var(--text-color); }
-        .container { max-width: 450px; margin: 80px auto; padding: 0 15px; text-align: center; }
-        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 35px 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .btn-red { background: var(--primary-red); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; font-size: 1rem; margin-bottom: 12px; }
-        .btn-black { background: #1a1a1a; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; font-size: 1rem; }
+        .container { max-width: 900px; margin: 30px auto; padding: 0 15px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
+        .subject-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 25px; text-align: center; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
+        .subject-card:hover { border-color: var(--primary-red); }
+        .btn-red { background: var(--primary-red); color: white; border: none; padding: 6px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
-        <span class="brand-logo" onclick="location.href='index.html'">
-            <span class="prime">PRIME</span> <span class="academy">ACADEMY</span>
+        <span class="brand-logo" onclick="location.href='student_dashboard.html'">
+            <span class="prime">PRIME</span> ACADEMY
         </span>
-        <button class="btn-black" style="width:auto; padding: 6px 14px; border-radius: 20px;" onclick="toggleTheme()">🌙 الوضع الليلي</button>
+        <div>
+            <span id="studentDisplay" style="margin-left: 15px; font-weight: bold;"></span>
+            <button class="btn-red" onclick="logout()">تسجيل خروج</button>
+        </div>
     </nav>
 
     <div class="container">
-        <div class="card">
-            <h2 style="margin-top:0; margin-bottom: 25px;">اختر بوابة الدخول</h2>
-            <button class="btn-red" onclick="location.href='student_login.html'">بوابة الطالب</button>
-            <button class="btn-black" onclick="location.href='teacher_login.html'">بوابة التدريسي</button>
+        <h3>المواد المفعلة بحسابك</h3>
+        <div class="grid" id="subjectsGrid">
+            <p>جاري تحميل المواد...</p>
         </div>
     </div>
 
-    <script>
-        function toggleTheme() {
-            const html = document.documentElement;
-            html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBApoSZ-HXy9kd07tSJfuRdWkJcrbQVYf0",
+            authDomain: "qmove1.firebaseapp.com",
+            projectId: "qmove1",
+            storageBucket: "qmove1.firebasestorage.app",
+            messagingSenderId: "166464805371",
+            appId: "1:166464805371:web:d65b0cb8b141e4b894935e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const user = localStorage.getItem('prime_student_user');
+        const name = localStorage.getItem('prime_student_name');
+        const localSession = localStorage.getItem('prime_session_id');
+
+        if (!user) {
+            location.href = "student_login.html";
+        } else {
+            document.getElementById('studentDisplay').innerText = "الطالب: " + name;
+            checkAndLoad();
+        }
+
+        async function checkAndLoad() {
+            try {
+                const docRef = doc(db, "students", user);
+                const docSnap = await getDoc(docRef);
+
+                if (!docSnap.exists()) { logout(); return; }
+
+                const data = docSnap.data();
+
+                if (data.currentSessionId && data.currentSessionId !== localSession) {
+                    alert("تم فتح الحساب من جهاز آخر! تم تسجيل الخروج لمنع المشاركة.");
+                    logout();
+                    return;
+                }
+
+                const grid = document.getElementById('subjectsGrid');
+                const courses = data.courses || [];
+
+                if (courses.length === 0) {
+                    grid.innerHTML = "<p>لا توجد مواد مفعلة بحسابك حالياً. راجع التدريسي.</p>";
+                    return;
+                }
+
+                grid.innerHTML = "";
+                courses.forEach(sub => {
+                    const card = document.createElement('div');
+                    card.className = 'subject-card';
+                    card.innerText = sub;
+                    card.onclick = () => {
+                        localStorage.setItem('prime_selected_subject', sub);
+                        location.href = 'watch_lecture.html';
+                    };
+                    grid.appendChild(card);
+                });
+
+            } catch (e) { console.error(e); }
+        }
+
+        window.logout = function() {
+            localStorage.clear();
+            location.href = "student_login.html";
         }
     </script>
 </body>
