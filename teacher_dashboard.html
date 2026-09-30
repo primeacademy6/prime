@@ -1,57 +1,271 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" data-theme="light">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دخول التدريسي - PRIME ACADEMY</title>
+    <title>لوحة التحكم - PRIME ACADEMY</title>
     <style>
         :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #1a1a1a; --primary-red: #dc3545; --border-color: #e9ecef; }
         body { background: var(--bg-color); color: var(--text-color); font-family: system-ui, sans-serif; margin: 0; direction: rtl; }
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--card-bg); border-bottom: 1px solid var(--border-color); }
         .brand-logo { font-size: 1.5rem; font-weight: 800; cursor: pointer; }
         .brand-logo .prime { color: var(--primary-red); }
-        .container { max-width: 400px; margin: 60px auto; padding: 0 15px; }
-        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        input { width: 100%; padding: 11px; margin: 6px 0 16px; border-radius: 6px; border: 1px solid var(--border-color); }
-        .btn-black { background: #1a1a1a; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; }
+        .container { max-width: 950px; margin: 30px auto; padding: 0 15px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; margin-bottom: 25px; }
+        input, select { width: 100%; padding: 10px; margin: 6px 0 16px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; }
+        .btn-red { background: var(--primary-red); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-black { background: #1a1a1a; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: right; border-bottom: 1px solid var(--border-color); }
+        th { background: var(--border-color); }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
-        <span class="brand-logo" onclick="location.href='index.html'">
+        <span class="brand-logo" onclick="location.href='teacher_dashboard.html'">
             <span class="prime">PRIME</span> ACADEMY
         </span>
+        <button class="btn-red" onclick="localStorage.removeItem('prime_teacher_auth'); location.href='index.html';">خروج</button>
     </nav>
 
     <div class="container">
+
+        <!-- 1. إضافة أو حذف مادة بالسستم -->
         <div class="card">
-            <h3 style="margin-top:0; text-align:center;">دخول التدريسي</h3>
-            <form id="loginForm">
-                <label>اسم المستخدم:</label>
-                <input type="text" id="tUser" required placeholder="admin">
-
-                <label>كلمة المرور:</label>
-                <input type="password" id="tPass" required placeholder="••••••••">
-
-                <button type="submit" class="btn-black">دخول للوحة التحكم</button>
-            </form>
+            <h3>📚 إدارة المواد بالسستم (إضافة / حذف مادة)</h3>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="newSubjectInput" placeholder="اكتب اسم مادة جديدة (مثال: الانكليزي)" style="margin: 0;">
+                <button class="btn-red" style="width: auto; whitespace: nowrap;" id="addSubjectBtn">إضافة المادة</button>
+            </div>
+            <h4 style="margin-top: 20px; margin-bottom: 10px;">المواد الحالية بالسستم:</h4>
+            <div id="systemSubjectsList" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
         </div>
+
+        <!-- 2. إضافة طالب جديد -->
+        <div class="card">
+            <h3>👤 إضافة طالب جديد</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                <input type="text" id="stName" placeholder="الاسم الكامل">
+                <input type="text" id="stUser" placeholder="اسم المستخدم (اليوزر)">
+                <input type="password" id="stPass" placeholder="كلمة المرور">
+            </div>
+            <button class="btn-black" id="createStudentBtn">إنشاء طالب جديد</button>
+            <p id="stMsg" style="font-weight: bold; margin-top: 10px;"></p>
+        </div>
+
+        <!-- 3. قائمة الطلاب والتحكم بموادهم -->
+        <div class="card">
+            <h3>👥 قائمة الطلاب والاشتراكات</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اليوزر</th>
+                            <th>الاسم</th>
+                            <th>المواد المفعلة</th>
+                            <th>تفعيل/إلغاء مادة</th>
+                            <th>حذف</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTable">
+                        <tr><td colspan="5">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 4. رفع المحاضرات -->
+        <div class="card">
+            <h3>🎥 رفع محاضرة جديدة</h3>
+            <label>اختر المادة:</label>
+            <select id="lectureSubjectSelect"></select>
+
+            <label>عنوان المحاضرة:</label>
+            <input type="text" id="lecTitle" placeholder="مثال: المحاضرة 1 - الأساسيات">
+
+            <label>اختر الفيديو:</label>
+            <input type="file" id="lecFile" accept="video/*">
+
+            <button class="btn-red" id="uploadLecBtn">رفع المحاضرة للسحاب</button>
+            <p id="uploadStatus" style="font-weight: bold; margin-top: 10px;"></p>
+        </div>
+
     </div>
 
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const u = document.getElementById('tUser').value;
-            const p = document.getElementById('tPass').value;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, doc, getDoc, setDoc, getDocs, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-            if (u === "admin" && p === "prime123") {
-                localStorage.setItem('prime_teacher_auth', 'true');
-                location.href = "teacher_dashboard.html";
-            } else {
-                alert("اسم المستخدم أو كلمة المرور غير صحيحة!");
-            }
+        const firebaseConfig = {
+            apiKey: "AIzaSyBApoSZ-HXy9kd07tSJfuRdWkJcrbQVYf0",
+            authDomain: "qmove1.firebaseapp.com",
+            projectId: "qmove1",
+            storageBucket: "qmove1.firebasestorage.app",
+            messagingSenderId: "166464805371",
+            appId: "1:166464805371:web:d65b0cb8b141e4b894935e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        if (!localStorage.getItem('prime_teacher_auth')) {
+            location.href = "teacher_login.html";
+        }
+
+        async function loadSystemSubjects() {
+            const listDiv = document.getElementById('systemSubjectsList');
+            const select = document.getElementById('lectureSubjectSelect');
+            try {
+                const docRef = doc(db, "system", "config");
+                const snap = await getDoc(docRef);
+                let subjects = ["الرياضيات", "الفيزياء", "الكيمياء", "الأحياء"];
+
+                if (snap.exists() && snap.data().subjects) {
+                    subjects = snap.data().subjects;
+                } else {
+                    await setDoc(docRef, { subjects: subjects });
+                }
+
+                listDiv.innerHTML = "";
+                select.innerHTML = "";
+
+                subjects.forEach(sub => {
+                    listDiv.innerHTML += `
+                        <span style="background: var(--border-color); padding: 6px 12px; border-radius: 20px; display: flex; align-items: center; gap: 8px;">
+                            <b>${sub}</b>
+                            <button onclick="deleteSubjectFromSystem('${sub}')" style="background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; line-height: 15px;">×</button>
+                        </span>
+                    `;
+                    select.innerHTML += `<option value="${sub}">${sub}</option>`;
+                });
+
+                window.systemSubjects = subjects;
+            } catch (e) { console.error(e); }
+        }
+
+        document.getElementById('addSubjectBtn').addEventListener('click', async () => {
+            const input = document.getElementById('newSubjectInput');
+            const name = input.value.trim();
+            if (!name) return;
+
+            await setDoc(doc(db, "system", "config"), { subjects: arrayUnion(name) }, { merge: true });
+            input.value = "";
+            loadSystemSubjects();
+            loadStudentsTable();
         });
+
+        window.deleteSubjectFromSystem = async function(subName) {
+            if (confirm(`حذف مادة (${subName}) نهائياً من السستم؟`)) {
+                await updateDoc(doc(db, "system", "config"), { subjects: arrayRemove(subName) });
+                loadSystemSubjects();
+            }
+        };
+
+        document.getElementById('createStudentBtn').addEventListener('click', async () => {
+            const name = document.getElementById('stName').value.trim();
+            const user = document.getElementById('stUser').value.trim();
+            const pass = document.getElementById('stPass').value.trim();
+            const msg = document.getElementById('stMsg');
+
+            if (!user || !pass || !name) {
+                msg.style.color = "red";
+                msg.innerText = "يرجى كتابة كافة البيانات!";
+                return;
+            }
+
+            try {
+                await setDoc(doc(db, "students", user), { name: name, password: pass, courses: ["الرياضيات"] });
+                msg.style.color = "green";
+                msg.innerText = "تم إنشاء حساب الطالب بنجاح!";
+                document.getElementById('stName').value = "";
+                document.getElementById('stUser').value = "";
+                document.getElementById('stPass').value = "";
+                loadStudentsTable();
+            } catch (e) { msg.style.color = "red"; msg.innerText = e.message; }
+        });
+
+        async function loadStudentsTable() {
+            const tbody = document.getElementById('studentsTable');
+            try {
+                const snap = await getDocs(collection(db, "students"));
+                tbody.innerHTML = "";
+
+                if (snap.empty) {
+                    tbody.innerHTML = "<tr><td colspan='5'>لا يوجد طلاب.</td></tr>";
+                    return;
+                }
+
+                snap.forEach(docSnap => {
+                    const st = docSnap.data();
+                    const user = docSnap.id;
+                    const stCourses = st.courses || [];
+
+                    let courseOptions = (window.systemSubjects || []).map(sub => {
+                        const hasIt = stCourses.includes(sub);
+                        return `<button style="background:${hasIt ? '#28a745' : '#6c757d'}; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.8rem; cursor:pointer; margin:2px;" onclick="toggleCourseForStudent('${user}', '${sub}', ${hasIt})">${hasIt ? '✓ ' + sub : '+ ' + sub}</button>`;
+                    }).join(" ");
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><b>${user}</b></td>
+                            <td>${st.name || user}</td>
+                            <td>${stCourses.join("، ") || "بدون مواد"}</td>
+                            <td>${courseOptions}</td>
+                            <td><button style="background:red; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" onclick="deleteStudent('${user}')">حذف</button></td>
+                        </tr>
+                    `;
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        window.toggleCourseForStudent = async function(user, course, hasIt) {
+            const refDoc = doc(db, "students", user);
+            if (hasIt) { await updateDoc(refDoc, { courses: arrayRemove(course) }); } 
+            else { await updateDoc(refDoc, { courses: arrayUnion(course) }); }
+            loadStudentsTable();
+        };
+
+        window.deleteStudent = async function(user) {
+            if (confirm(`حذف حساب الطالب (${user})؟`)) {
+                await deleteDoc(doc(db, "students", user));
+                loadStudentsTable();
+            }
+        };
+
+        document.getElementById('uploadLecBtn').addEventListener('click', async () => {
+            const sub = document.getElementById('lectureSubjectSelect').value;
+            const title = document.getElementById('lecTitle').value.trim();
+            const file = document.getElementById('lecFile').files[0];
+            const status = document.getElementById('uploadStatus');
+
+            if (!title || !file) {
+                status.style.color = "red";
+                status.innerText = "يرجى كتابة العنوان واختيار الفيديو!";
+                return;
+            }
+
+            status.style.color = "blue";
+            status.innerText = "جاري رفع الفيديو إلى السحاب...";
+
+            try {
+                const storageRef = ref(storage, 'lectures/' + Date.now() + '_' + file.name);
+                await uploadBytes(storageRef, file);
+                const videoUrl = await getDownloadURL(storageRef);
+
+                await addDoc(collection(db, "lectures"), { subject: sub, title: title, videoUrl: videoUrl, createdAt: new Date() });
+
+                status.style.color = "green";
+                status.innerText = "تم رفع المحاضرة وحفظها بنجاح!";
+                document.getElementById('lecTitle').value = "";
+                document.getElementById('lecFile').value = "";
+            } catch (e) { status.style.color = "red"; status.innerText = e.message; }
+        });
+
+        loadSystemSubjects();
+        loadStudentsTable();
     </script>
 </body>
 </html>
