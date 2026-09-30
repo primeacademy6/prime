@@ -16,7 +16,7 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: system-ui, sans-serif;
+            font-family: system-ui, -apple-system, sans-serif;
             margin: 0;
             direction: rtl;
         }
@@ -45,6 +45,7 @@
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
         input {
@@ -54,6 +55,12 @@
             border: 1px solid var(--border-color);
             border-radius: 6px;
             box-sizing: border-box;
+            font-size: 0.95rem;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-red);
         }
 
         .btn-submit {
@@ -64,7 +71,12 @@
             padding: 12px;
             border-radius: 6px;
             font-weight: bold;
+            font-size: 1rem;
             cursor: pointer;
+        }
+
+        .btn-submit:hover {
+            background: #bb2d3b;
         }
     </style>
 </head>
@@ -79,7 +91,7 @@
     <div class="form-container">
         <h3 style="margin-top: 0; text-align: center;">دخول الطالب</h3>
         <form id="studentLoginForm">
-            <label>اسم المستخدم أو البريد:</label>
+            <label>اسم المستخدم أو معرف الطالب:</label>
             <input type="text" id="studentId" required placeholder="ادخل المعرف الخاص بك">
 
             <label>كلمة المرور:</label>
@@ -89,21 +101,21 @@
         </form>
     </div>
 
-    <script type="module">
-        import { auth } from './assets/js/firebase-config.js';
-        import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-        document.getElementById('studentLoginForm').addEventListener('submit', async (e) => {
+    <script>
+        document.getElementById('studentLoginForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            const id = document.getElementById('studentId').value;
-            const pass = document.getElementById('studentPass').value;
+            
+            const id = document.getElementById('studentId').value.trim();
+            const pass = document.getElementById('studentPass').value.trim();
 
-            try {
-                // حفظ الجلسة محلياً والتوجيه لوجهة المواد المشترك بها
+            if (id !== "" && pass !== "") {
+                // حفظ المعرف محلياً للتعرف على الطالب باللوحة
                 localStorage.setItem('current_student_id', id);
+                
+                // التوجيه المباشر للوحة مواد الطالب
                 window.location.href = "student_dashboard.html";
-            } catch (err) {
-                alert("خطأ في بيانات الدخول!");
+            } else {
+                alert("يرجى كتابة المعرف وكلمة المرور!");
             }
         });
     </script>
