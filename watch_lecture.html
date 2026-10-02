@@ -14,19 +14,23 @@
         .brand-logo { font-size: 1.5rem; font-weight: 800; cursor: pointer; }
         .brand-logo .prime { color: var(--primary-red); }
 
-        .main-layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; max-width: 1250px; margin: 20px auto; padding: 0 15px; }
+        .main-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; max-width: 1280px; margin: 20px auto; padding: 0 15px; }
 
         .video-box { position: relative; width: 100%; height: 480px; background: #000; border-radius: 12px; overflow: hidden; }
         .video-box iframe, .video-box video { width: 100%; height: 100%; border: none; }
 
+        /* العلامة المائية المائية المتحركة */
         .watermark { position: absolute; color: rgba(255, 255, 255, 0.4); font-size: 1rem; font-weight: bold; pointer-events: none; z-index: 2147483647 !important; padding: 4px 10px; background: rgba(0,0,0,0.35); border-radius: 6px; transition: top 2.5s ease, left 2.5s ease; font-family: monospace; direction: ltr; }
-        
         .btn-fullscreen { background: rgba(220, 53, 69, 0.85); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; position: absolute; top: 12px; left: 12px; z-index: 2147483646; font-size: 0.8rem; font-weight: bold; }
 
-        /* القائمة الجانبية للفصول والحلقات */
-        .sidebar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; height: 600px; overflow-y: auto; }
-        .chapter-title { background: var(--bg-color); padding: 10px; border-radius: 6px; font-weight: bold; margin-top: 15px; border-right: 4px solid var(--primary-red); }
-        .lecture-item { padding: 10px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.95rem; transition: background 0.2s; border-radius: 4px; margin-top: 5px; }
+        /* القائمة الجانبية الأكورديون */
+        .sidebar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; height: 620px; overflow-y: auto; }
+        
+        .chapter-accordion { border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+        .chapter-header { background: var(--bg-color); padding: 12px; font-weight: bold; cursor: pointer; border-right: 4px solid var(--primary-red); display: flex; justify-content: space-between; font-size: 0.95rem; }
+        .chapter-body { display: none; background: var(--card-bg); padding: 5px; }
+
+        .lecture-item { padding: 10px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.9rem; transition: background 0.2s; border-radius: 4px; margin-top: 3px; }
         .lecture-item:hover, .lecture-item.active { background: rgba(220, 53, 69, 0.1); color: var(--primary-red); font-weight: bold; }
 
         .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; margin-top: 20px; }
@@ -52,20 +56,19 @@
 
             <div class="card" id="detailsCard">
                 <h4 style="margin-top:0;">📄 تفاصيل الدرس والمرفقات</h4>
-                <p id="lecDescText">اختر محاضرة للبدء.</p>
+                <p id="lecDescText">اختر حلقة للبدء بالفيديو.</p>
                 <a id="lecPdfLink" href="#" target="_blank" class="btn-red" style="display:none; text-decoration:none;">📥 تحميل المرفقات</a>
             </div>
 
             <div class="card">
                 <h4 style="margin-top:0;">📝 دفتر الملاحظات</h4>
-                <textarea id="myNotes" placeholder="اكتب ملاحظاتك..."></textarea>
+                <textarea id="myNotes" placeholder="اكتب ملاحظاتك وتنسحفظ تلقائياً..."></textarea>
             </div>
         </div>
 
-        <!-- القائمة الجانبية المنسقة بحسب الفصول والحلقات -->
         <div class="sidebar">
             <h3 style="margin-top:0; border-bottom:1px solid var(--border-color); padding-bottom:10px;">📋 الفصول والحلقات</h3>
-            <div id="chaptersContainer">جاري تحميل الفصول...</div>
+            <div id="chaptersContainer">جاري تحميل منهج المادة...</div>
         </div>
     </div>
 
@@ -92,57 +95,92 @@
         const wm = document.getElementById('wmText');
         wm.innerText = name + " | " + user;
 
+        // تحريك العلامة المائية بشكل عشوائي للحماية
         setInterval(() => {
             wm.style.top = (Math.floor(Math.random() * 70) + 15) + "%";
             wm.style.left = (Math.floor(Math.random() * 60) + 15) + "%";
         }, 3500);
 
-        let allLectures = [];
-
-        async function loadSubjectLectures() {
+        async function loadSubjectContent() {
             try {
-                const q = query(collection(db, "lectures"), where("subject", "==", subject));
-                const snap = await getDocs(q);
+                const container = document.getElementById('chaptersContainer');
+                container.innerHTML = '';
 
-                const chaptersContainer = document.getElementById('chaptersContainer');
-                chaptersContainer.innerHTML = '';
+                // 1. جلب الفصول
+                const qCh = query(collection(db, "chapters"), where("subject", "==", subject));
+                const chSnap = await getDocs(qCh);
 
-                if (!snap.empty) {
-                    const chaptersMap = {};
+                // 2. جلب الحلقات
+                const qLec = query(collection(db, "lectures"), where("subject", "==", subject));
+                const lecSnap = await getDocs(qLec);
 
-                    snap.forEach(docSnap => {
-                        const data = docSnap.data();
-                        const ch = data.chapter || "الفصل الأول";
-                        if (!chaptersMap[ch]) { chaptersMap[ch] = []; }
-                        chaptersMap[ch].push(data);
+                const lecturesMap = {};
+                let firstLec = null;
+
+                lecSnap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const chName = data.chapter;
+                    if (!lecturesMap[chName]) lecturesMap[chName] = [];
+                    lecturesMap[chName].push(data);
+                    if (!firstLec) firstLec = data;
+                });
+
+                if (!chSnap.empty) {
+                    let isFirstCh = true;
+
+                    chSnap.forEach(chDoc => {
+                        const chName = chDoc.data().name;
+                        const chId = chDoc.id;
+                        const lecs = lecturesMap[chName] || [];
+
+                        const accDiv = document.createElement('div');
+                        accDiv.className = 'chapter-accordion';
+
+                        const headerDiv = document.createElement('div');
+                        headerDiv.className = 'chapter-header';
+                        headerDiv.innerHTML = `<span>📂 ${chName}</span> <span>${lecs.length} حلقات ▾</span>`;
+                        headerDiv.onclick = () => toggleStAccordion('st_ch_' + chId);
+
+                        const bodyDiv = document.createElement('div');
+                        bodyDiv.className = 'chapter-body';
+                        bodyDiv.id = 'st_ch_' + chId;
+
+                        // فتح أول فصل تلقائياً
+                        if (isFirstCh) {
+                            bodyDiv.style.display = 'block';
+                            isFirstCh = false;
+                        }
+
+                        lecs.forEach(lec => {
+                            const item = document.createElement('div');
+                            item.className = 'lecture-item';
+                            item.innerText = "▶ " + lec.title;
+                            item.onclick = () => playLecture(lec, item);
+                            bodyDiv.appendChild(item);
+                        });
+
+                        accDiv.appendChild(headerDiv);
+                        accDiv.appendChild(bodyDiv);
+                        container.appendChild(accDiv);
                     });
 
-                    // تجميع وعرض الفصول والحلقات
-                    for (const ch in chaptersMap) {
-                        const chDiv = document.createElement('div');
-                        chDiv.className = 'chapter-title';
-                        chDiv.innerText = ch;
-                        chaptersContainer.appendChild(chDiv);
-
-                        chaptersMap[ch].forEach(lec => {
-                            const lecDiv = document.createElement('div');
-                            lecDiv.className = 'lecture-item';
-                            lecDiv.innerText = "▶ " + lec.title;
-                            lecDiv.onclick = () => playLecture(lec, lecDiv);
-                            chaptersContainer.appendChild(lecDiv);
-                        });
+                    // تشغيل أول حلقة تلقائياً
+                    if (firstLec) {
+                        const firstItemEl = container.querySelector('.lecture-item');
+                        playLecture(firstLec, firstItemEl);
                     }
 
-                    // تشغيل أول محاضرة تلقائياً
-                    const firstLecture = snap.docs[0].data();
-                    playLecture(firstLecture, chaptersContainer.querySelector('.lecture-item'));
-
                 } else {
-                    document.getElementById('lectureTitle').innerText = subject + " - لا توجد محاضرات حالياً";
-                    chaptersContainer.innerHTML = 'لا توجد محاضرات مضافة لهذا الفصل.';
+                    document.getElementById('lectureTitle').innerText = subject + " - لا توجد فصول حالياً";
+                    container.innerHTML = 'لم يتم رفع منهج لهذه المادة بعد.';
                 }
             } catch (e) { console.error(e); }
         }
+
+        window.toggleStAccordion = function(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        };
 
         function playLecture(lec, element) {
             document.querySelectorAll('.lecture-item').forEach(el => el.classList.remove('active'));
@@ -178,7 +216,14 @@
             }
         };
 
-        loadSubjectLectures();
+        // حفظ الملاحظات تلقائياً بـ LocalStorage
+        const notes = document.getElementById('myNotes');
+        notes.value = localStorage.getItem('notes_' + subject) || '';
+        notes.addEventListener('input', () => {
+            localStorage.setItem('notes_' + subject, notes.value);
+        });
+
+        loadSubjectContent();
     </script>
 </body>
 </html>
