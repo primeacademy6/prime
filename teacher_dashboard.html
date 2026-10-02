@@ -52,11 +52,11 @@
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('subjectsTab')">📚 إدارة المواد والأغلفة</button>
             <button class="tab-btn" onclick="switchTab('lecturesTab')">🎬 المحاضرات والفصول</button>
-            <button class="tab-btn" onclick="switchTab('studentsTab')">👥 إدارة الطلاب والتفعيل</button>
+            <button class="tab-btn" onclick="switchTab('studentsTab')">👥 إدارة وإضافة الطلاب</button>
             <button class="tab-btn" onclick="switchTab('teachersTab')">👨‍🏫 حسابات المدرسين</button>
         </div>
 
-        <!-- 1. تبويب إضافة وتعديل المواد -->
+        <!-- 1. تبويب إدارة المواد -->
         <div id="subjectsTab" class="tab-content">
             <div class="card">
                 <h3 id="subFormTitle">➕ إضافة مادة جديدة</h3>
@@ -97,7 +97,7 @@
             </div>
         </div>
 
-        <!-- 2. تبويب إضافة وتعديل المحاضرات -->
+        <!-- 2. تبويب المحاضرات -->
         <div id="lecturesTab" class="tab-content" style="display: none;">
             <div class="card">
                 <h3 id="lecFormTitle">🎬 إضافة محاضرة جديدة</h3>
@@ -146,8 +146,40 @@
             </div>
         </div>
 
-        <!-- 3. تبويب البحث والتحكم الشامل بالطلاب -->
+        <!-- 3. تبويب إضافة الطلاب والبحث والتفعيل -->
         <div id="studentsTab" class="tab-content" style="display: none;">
+            
+            <!-- واجهة إضافة طالب جديد كاملة بالميزات المطلوبة -->
+            <div class="card">
+                <h3>👤 إضافة طالب جديد بالنظام</h3>
+                <div class="form-group">
+                    <label>اسم الطالب الكامل:</label>
+                    <input type="text" id="createStName">
+                </div>
+                <div class="form-group">
+                    <label>اسم المستخدم (User / اليوزر):</label>
+                    <input type="text" id="createStUser">
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور (Password):</label>
+                    <input type="text" id="createStPass">
+                </div>
+                <div class="form-group">
+                    <label>رقم هاتف الطالب:</label>
+                    <input type="text" id="createStPhone">
+                </div>
+                <div class="form-group">
+                    <label>رقم هاتف ولي الأمر:</label>
+                    <input type="text" id="createStParentPhone">
+                </div>
+                <div class="form-group">
+                    <label>المواد التي يرغب بالاشتراك بها:</label>
+                    <div id="newStudentSubjectsBoxes" style="margin-top: 10px;"></div>
+                </div>
+                <button class="btn-red" onclick="addNewStudent()">إنشاء حساب الطالب</button>
+            </div>
+
+            <!-- واجهة البحث والتحكم الشامل -->
             <div class="card">
                 <h3>🔍 البحث عن طالب وتفعيل المواد</h3>
                 <div class="form-group">
@@ -159,7 +191,6 @@
                     <select id="studentSelect" onchange="loadStudentDetails()"></select>
                 </div>
 
-                <!-- كارت معلومات الطالب المختار -->
                 <div id="studentDetailBox" class="student-info-box" style="display: none;">
                     <h4>📄 كافة معلومات الطالب الحالية:</h4>
                     <div class="info-grid">
@@ -179,12 +210,12 @@
                     <h4>📚 المواد المفعّلة للحساب:</h4>
                     <div id="studentSubjectsBoxes" style="margin-top: 10px;"></div>
                     <br>
-                    <button class="btn-red" onclick="saveStudentPermissions()">حفظ المواد المفعلة</button>
+                    <button class="btn-red" onclick="saveStudentPermissions()">حفظ التعديلات على المواد</button>
                 </div>
             </div>
         </div>
 
-        <!-- 4. تبويب إنشاء حسابات التدريسيين -->
+        <!-- 4. تبويب إنشاء حسابات المدرسين -->
         <div id="teachersTab" class="tab-content" style="display: none;">
             <div class="card">
                 <h3>👨‍🏫 إنشاء حساب أستاذ (لوحة خاصة للمادة)</h3>
@@ -246,7 +277,7 @@
             event.target.classList.add('active');
         };
 
-        // --- إدارة المواد وتعديلها مع رفع الصور ---
+        // --- إدارة المواد ---
         window.saveSubject = async function() {
             const id = document.getElementById('editSubId').value;
             const name = document.getElementById('newSubName').value.trim();
@@ -284,9 +315,12 @@
             const table = document.getElementById('subjectsTable');
             const lecSelect = document.getElementById('lectureSubSelect');
             const teachSelect = document.getElementById('teacherSubSelect');
+            const newStBoxes = document.getElementById('newStudentSubjectsBoxes');
+            
             table.innerHTML = '';
             lecSelect.innerHTML = '';
             if(teachSelect) teachSelect.innerHTML = '';
+            if(newStBoxes) newStBoxes.innerHTML = '';
 
             const snap = await getDocs(collection(db, "subjects"));
             snap.forEach(d => {
@@ -304,6 +338,14 @@
                 `;
                 lecSelect.innerHTML += `<option value="${data.name}">${data.name}</option>`;
                 if(teachSelect) teachSelect.innerHTML += `<option value="${data.name}">${data.name}</option>`;
+                
+                if(newStBoxes) {
+                    newStBoxes.innerHTML += `
+                        <label style="display:inline-block; margin-left: 15px;">
+                            <input type="checkbox" class="new-st-sub" value="${data.name}"> ${data.name}
+                        </label>
+                    `;
+                }
             });
         }
 
@@ -335,6 +377,43 @@
                 await deleteDoc(doc(db, "subjects", id));
                 loadSubjects();
             }
+        };
+
+        // --- إضافة طالب جديد بالنظام ---
+        window.addNewStudent = async function() {
+            const name = document.getElementById('createStName').value.trim();
+            const user = document.getElementById('createStUser').value.trim();
+            const pass = document.getElementById('createStPass').value.trim();
+            const phone = document.getElementById('createStPhone').value.trim();
+            const parentPhone = document.getElementById('createStParentPhone').value.trim();
+
+            const checkboxes = document.querySelectorAll('.new-st-sub:checked');
+            const selectedSubs = Array.from(checkboxes).map(cb => cb.value);
+
+            if (!name || !user || !pass) {
+                return alert('يرجى كتابة اسم الطالب واليوزر والباسورد على الأقل!');
+            }
+
+            try {
+                await setDoc(doc(db, "students", user), {
+                    name: name,
+                    password: pass,
+                    phone: phone,
+                    parentPhone: parentPhone,
+                    allowedSubjects: selectedSubs,
+                    disabled: false
+                });
+
+                alert('تمت إضافة الطالب وحفظ حسابه بنجاح!');
+                document.getElementById('createStName').value = '';
+                document.getElementById('createStUser').value = '';
+                document.getElementById('createStPass').value = '';
+                document.getElementById('createStPhone').value = '';
+                document.getElementById('createStParentPhone').value = '';
+                document.querySelectorAll('.new-st-sub').forEach(cb => cb.checked = false);
+
+                loadStudents();
+            } catch (e) { alert('خطأ: ' + e.message); }
         };
 
         // --- إدارة وتعديل المحاضرات ---
@@ -420,7 +499,7 @@
             }
         };
 
-        // --- البحث المتقدم والتحكم الشامل بالطلاب ---
+        // --- البحث والتحكم الشامل بالطلاب ---
         async function loadStudents() {
             allStudentsList = [];
             const snap = await getDocs(collection(db, "students"));
@@ -467,7 +546,6 @@
                 document.getElementById('stStatus').innerText = disabled ? '🔴 معطل' : '🟢 نشط';
                 document.getElementById('btnToggleStatus').innerText = disabled ? 'تنشيط الحساب' : 'تعطيل الحساب';
 
-                // تحميل خيارات المواد المفعلة
                 const allowed = d.allowedSubjects || [];
                 const container = document.getElementById('studentSubjectsBoxes');
                 container.innerHTML = '';
@@ -512,14 +590,14 @@
             const selectedSubs = Array.from(checkboxes).map(cb => cb.value);
 
             try {
-                await setDoc(doc(doc(db, "students", studentId)), {
+                await setDoc(doc(db, "students", studentId), {
                     allowedSubjects: selectedSubs
                 }, { merge: true });
                 alert('تم تحديث المواد المسموحة للطالب بنجاح!');
             } catch (e) { alert('خطأ: ' + e.message); }
         };
 
-        // --- إنشاء إدارة حسابات المدرسين الخاصين ---
+        // --- إدارة حسابات المدرسين ---
         window.createTeacherAccount = async function() {
             const sub = document.getElementById('teacherSubSelect').value;
             const user = document.getElementById('teacherUser').value.trim();
