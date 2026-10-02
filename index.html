@@ -3,160 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRIME ACADEMY</title>
+    <title>تسجيل الدخول - PRIME ACADEMY</title>
     <style>
-        :root {
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-color: #1a1a1a;
-            --primary-red: #dc3545;
-            --border-color: #e9ecef;
-        }
+        :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #1a1a1a; --primary-red: #dc3545; --border-color: #e9ecef; }
+        [data-theme="dark"] { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #f1f1f1; --border-color: #2d2d2d; }
 
-        [data-theme="dark"] {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #f1f1f1;
-            --border-color: #2d2d2d;
-        }
+        * { box-sizing: border-box; }
+        body { background: var(--bg-color); color: var(--text-color); font-family: system-ui, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; direction: rtl; }
 
-        * { box-sizing: border-box; transition: background 0.2s, color 0.2s; }
-        body { background: var(--bg-color); color: var(--text-color); font-family: system-ui, sans-serif; margin: 0; padding: 0; direction: rtl; }
-
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            background: var(--card-bg);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .brand-logo { font-size: 1.6rem; font-weight: 800; cursor: pointer; }
+        .login-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 30px; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); text-align: center; }
+        .brand-logo { font-size: 2rem; font-weight: 800; margin-bottom: 20px; }
         .brand-logo .prime { color: var(--primary-red); }
 
-        .main-container {
-            max-width: 420px;
-            margin: 60px auto;
-            padding: 0 15px;
-        }
+        .form-group { margin-bottom: 15px; text-align: right; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 1rem; }
 
-        .login-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 30px 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-        }
+        .btn-red { background: var(--primary-red); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; transition: background 0.2s; }
+        .btn-red:hover { background: #b02a37; }
 
-        /* مربعات التبديل بالأعلى */
-        .tabs-header {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            font-weight: bold;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-color);
-            color: var(--text-color);
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
-
-        .tab-btn.active-student {
-            background: var(--primary-red);
-            color: white;
-            border-color: var(--primary-red);
-        }
-
-        .tab-btn.active-teacher {
-            background: #1a1a1a;
-            color: white;
-            border-color: #1a1a1a;
-        }
-
-        input {
-            width: 100%;
-            padding: 11px;
-            margin: 6px 0 16px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-color);
-            color: var(--text-color);
-            box-sizing: border-box;
-            font-size: 0.95rem;
-        }
-
-        .btn-submit {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            margin-top: 5px;
-        }
-
-        .btn-student { background: var(--primary-red); }
-        .btn-teacher { background: #1a1a1a; }
+        .error-msg { color: var(--primary-red); font-weight: bold; font-size: 0.85rem; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <span class="brand-logo" onclick="location.href='index.html'">
+    <div class="login-card">
+        <div class="brand-logo">
             <span class="prime">PRIME</span> ACADEMY
-        </span>
-        <button style="background: none; border: 1px solid var(--border-color); color: var(--text-color); padding: 6px 14px; border-radius: 20px; cursor: pointer;" onclick="toggleTheme()">🌙 الوضع الليلي</button>
-    </nav>
-
-    <div class="main-container">
-        <div class="login-card">
-            
-            <!-- خيارات التبديل فوق الكادر -->
-            <div class="tabs-header">
-                <div class="tab-btn active-student" id="tabStudent" onclick="switchTab('student')">دخول الطالب</div>
-                <div class="tab-btn" id="tabTeacher" onclick="switchTab('teacher')">دخول التدريسي</div>
-            </div>
-
-            <!-- نموذج الطالب -->
-            <form id="studentForm">
-                <label>اسم المستخدم / اليوزر:</label>
-                <input type="text" id="stUser" required placeholder="ادخل يوزر الطالب">
-
-                <label>كلمة المرور:</label>
-                <input type="password" id="stPass" required placeholder="••••••••">
-
-                <button type="submit" class="btn-submit btn-student">دخول منصة الطالب</button>
-            </form>
-
-            <!-- نموذج التدريسي -->
-            <form id="teacherForm" style="display: none;">
-                <label>اسم المستخدم / رمز الأستاذ:</label>
-                <input type="text" id="tUser" required placeholder="admin">
-
-                <label>كلمة المرور:</label>
-                <input type="password" id="tPass" required placeholder="••••••••">
-
-                <button type="submit" class="btn-submit btn-teacher">دخول لوحة التحكم</button>
-            </form>
-
-            <p id="msg" style="text-align: center; font-weight: bold; margin-top: 15px; margin-bottom: 0;"></p>
         </div>
+        <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 1.1rem; color: #666;">تسجيل الدخول للمنصة</h3>
+
+        <div class="form-group">
+            <label>اسم المستخدم (Username / اليوزر):</label>
+            <input type="text" id="loginUser" placeholder="اكتب اسم المستخدم...">
+        </div>
+
+        <div class="form-group">
+            <label>كلمة المرور (Password):</label>
+            <input type="password" id="loginPass" placeholder="اكتب كلمة المرور...">
+        </div>
+
+        <button class="btn-red" onclick="handleLogin()">تسجيل الدخول</button>
+        <p id="errorMsg" class="error-msg"></p>
     </div>
 
-    <!-- ربط الفايربيس للتحقق من الحسابات -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBApoSZ-HXy9kd07tSJfuRdWkJcrbQVYf0",
@@ -170,81 +63,66 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // التبديل بين الشاشتين
-        window.switchTab = function(type) {
-            const tabSt = document.getElementById('tabStudent');
-            const tabTe = document.getElementById('tabTeacher');
-            const formSt = document.getElementById('studentForm');
-            const formTe = document.getElementById('teacherForm');
-            const msg = document.getElementById('msg');
-            msg.innerText = "";
+        window.handleLogin = async function() {
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            const err = document.getElementById('errorMsg');
+            err.style.display = 'none';
 
-            if (type === 'student') {
-                tabSt.className = "tab-btn active-student";
-                tabTe.className = "tab-btn";
-                formSt.style.display = "block";
-                formTe.style.display = "none";
-            } else {
-                tabTe.className = "tab-btn active-teacher";
-                tabSt.className = "tab-btn";
-                formTe.style.display = "block";
-                formSt.style.display = "none";
+            if (!user || !pass) {
+                err.innerText = "يرجى كتابة اسم المستخدم وكلمة المرور!";
+                err.style.display = 'block';
+                return;
             }
-        };
-
-        // تسجيل الطالب
-        document.getElementById('studentForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const user = document.getElementById('stUser').value.trim();
-            const pass = document.getElementById('stPass').value.trim();
-            const msg = document.getElementById('msg');
-
-            msg.style.color = "blue";
-            msg.innerText = "جاري التحقق من حساب الطالب...";
 
             try {
-                const docRef = doc(db, "students", user);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists() && docSnap.data().password === pass) {
-                    const sessionId = "sess_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
-                    await updateDoc(docRef, { currentSessionId: sessionId });
-
-                    localStorage.setItem('prime_student_user', user);
-                    localStorage.setItem('prime_student_name', docSnap.data().name || user);
-                    localStorage.setItem('prime_session_id', sessionId);
-
-                    msg.style.color = "green";
-                    msg.innerText = "تم الدخول بنجاح!";
-                    setTimeout(() => location.href = 'student_dashboard.html', 600);
-                } else {
-                    msg.style.color = "red";
-                    msg.innerText = "اسم المستخدم أو كلمة المرور غير صحيحة!";
+                // 1. فحص حساب المدير العام المنشأ مسبقاً
+                if (user === 'admin' && pass === 'prime123') {
+                    localStorage.setItem('prime_admin', 'true');
+                    location.href = 'teacher_dashboard.html';
+                    return;
                 }
-            } catch (err) {
-                msg.style.color = "red";
-                msg.innerText = "خطأ في الاتصال: " + err.message;
+
+                // 2. فحص حسابات المدرسين الخاصين بالمواد (Teachers)
+                const teacherSnap = await getDoc(doc(db, "teachers", user));
+                if (teacherSnap.exists()) {
+                    const tData = teacherSnap.data();
+                    if (tData.password === pass) {
+                        localStorage.setItem('prime_teacher_user', user);
+                        localStorage.setItem('prime_teacher_subject', tData.subject);
+                        location.href = 'teacher_only_dashboard.html';
+                        return;
+                    }
+                }
+
+                // 3. فحص حسابات الطلاب (Students)
+                const studentSnap = await getDoc(doc(db, "students", user));
+                if (studentSnap.exists()) {
+                    const sData = studentSnap.data();
+
+                    if (sData.disabled) {
+                        err.innerText = "حسابك معطل حالياً، يرجى مراجعة إدارة المنصة.";
+                        err.style.display = 'block';
+                        return;
+                    }
+
+                    if (sData.password === pass) {
+                        localStorage.setItem('prime_student_user', user);
+                        localStorage.setItem('prime_student_name', sData.name || user);
+                        location.href = 'student_dashboard.html';
+                        return;
+                    }
+                }
+
+                // إذا لم تتطابق البيانات مع أي فئة
+                err.innerText = "اسم المستخدم أو كلمة المرور غير صحيحة!";
+                err.style.display = 'block';
+
+            } catch (e) {
+                console.error(e);
+                err.innerText = "حدث خطأ أثناء الاتصال بالسيرفر.";
+                err.style.display = 'block';
             }
-        });
-
-        // تسجيل التدريسي
-        document.getElementById('teacherForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const u = document.getElementById('tUser').value.trim();
-            const p = document.getElementById('tPass').value.trim();
-
-            if (u === "admin" && p === "prime123") {
-                localStorage.setItem('prime_teacher_auth', 'true');
-                location.href = "teacher_dashboard.html";
-            } else {
-                document.getElementById('msg').style.color = "red";
-                document.getElementById('msg').innerText = "بيانات التدريسي غير صحيحة!";
-            }
-        });
-
-        window.toggleTheme = function() {
-            const html = document.documentElement;
-            html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
         };
     </script>
 </body>
