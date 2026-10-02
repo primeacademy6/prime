@@ -17,12 +17,15 @@
 
         .form-group { margin-bottom: 15px; text-align: right; }
         label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
-        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 1rem; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 1rem; transition: border-color 0.2s; }
+        input:focus { outline: none; border-color: var(--primary-red); }
 
-        .btn-red { background: var(--primary-red); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; transition: background 0.2s; }
+        .btn-red { background: var(--primary-red); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; transition: background 0.2s, opacity 0.2s; }
         .btn-red:hover { background: #b02a37; }
+        .btn-red:disabled { opacity: 0.7; cursor: not-allowed; }
 
-        .error-msg { color: var(--primary-red); font-weight: bold; font-size: 0.85rem; margin-top: 10px; display: none; }
+        .error-msg { color: var(--primary-red); font-weight: bold; font-size: 0.85rem; margin-top: 12px; display: none; }
+        .success-msg { color: #198754; font-weight: bold; font-size: 0.85rem; margin-top: 12px; display: none; }
     </style>
 </head>
 <body>
@@ -35,7 +38,7 @@
 
         <div class="form-group">
             <label>اسم المستخدم (Username / اليوزر):</label>
-            <input type="text" id="loginUser" placeholder="اكتب اسم المستخدم...">
+            <input type="text" id="loginUser" placeholder="اكتب اسم المستخدم..." autocomplete="off">
         </div>
 
         <div class="form-group">
@@ -43,8 +46,9 @@
             <input type="password" id="loginPass" placeholder="اكتب كلمة المرور...">
         </div>
 
-        <button class="btn-red" onclick="handleLogin()">تسجيل الدخول</button>
+        <button class="btn-red" id="submitBtn" onclick="handleLogin()">تسجيل الدخول</button>
         <p id="errorMsg" class="error-msg"></p>
+        <p id="successMsg" class="success-msg"></p>
     </div>
 
     <script type="module">
@@ -63,11 +67,27 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        const loginUser = document.getElementById('loginUser');
+        const loginPass = document.getElementById('loginPass');
+        const submitBtn = document.getElementById('submitBtn');
+        const err = document.getElementById('errorMsg');
+        const succ = document.getElementById('successMsg');
+
+        // تفعيل زر Enter بالحاسبة والموبايل
+        [loginUser, loginPass].forEach(input => {
+            input.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter' || e.keyCode === 13) {
+                    handleLogin();
+                }
+            });
+        });
+
         window.handleLogin = async function() {
-            const user = document.getElementById('loginUser').value.trim();
-            const pass = document.getElementById('loginPass').value.trim();
-            const err = document.getElementById('errorMsg');
+            const user = loginUser.value.trim();
+            const pass = loginPass.value.trim();
+
             err.style.display = 'none';
+            succ.style.display = 'none';
 
             if (!user || !pass) {
                 err.innerText = "يرجى كتابة اسم المستخدم وكلمة المرور!";
@@ -75,55 +95,71 @@
                 return;
             }
 
+            // إعطاء تفاعل حي بالواجهة
+            submitBtn.disabled = true;
+            submitBtn.innerText = "جاري التحقق والربط...";
+
             try {
-                // 1. فحص حساب المدير العام المنشأ مسبقاً
-                if (user === 'admin' && pass === 'prime123') {
+                // 1. فحص حساب المدير العام
+                if (user === 'admin' && pass === '123456') {
                     localStorage.setItem('prime_admin', 'true');
-                    location.href = 'teacher_dashboard.html';
+                    showSuccessAndRedirect("تم تسجيل الدخول بنجاح! جاري التوجيه...", "teacher_dashboard.html");
                     return;
                 }
 
-                // 2. فحص حسابات المدرسين الخاصين بالمواد (Teachers)
+                // 2. فحص حسابات المدرسين
                 const teacherSnap = await getDoc(doc(db, "teachers", user));
                 if (teacherSnap.exists()) {
                     const tData = teacherSnap.data();
                     if (tData.password === pass) {
                         localStorage.setItem('prime_teacher_user', user);
                         localStorage.setItem('prime_teacher_subject', tData.subject);
-                        location.href = 'teacher_only_dashboard.html';
+                        showSuccessAndRedirect("أهلاً بك يا أستاذ! جاري التوجيه للوحتك...", "teacher_only_dashboard.html");
                         return;
                     }
                 }
 
-                // 3. فحص حسابات الطلاب (Students)
+                // 3. فحص حسابات الطلاب
                 const studentSnap = await getDoc(doc(db, "students", user));
                 if (studentSnap.exists()) {
                     const sData = studentSnap.data();
 
                     if (sData.disabled) {
-                        err.innerText = "حسابك معطل حالياً، يرجى مراجعة إدارة المنصة.";
-                        err.style.display = 'block';
+                        showError("حسابك معطل حالياً، يرجى مراجعة إدارة المنصة.");
                         return;
                     }
 
                     if (sData.password === pass) {
                         localStorage.setItem('prime_student_user', user);
                         localStorage.setItem('prime_student_name', sData.name || user);
-                        location.href = 'student_dashboard.html';
+                        showSuccessAndRedirect("تم تسجيل الدخول بنجاح! جاري توجيهك للمواد...", "student_dashboard.html");
                         return;
                     }
                 }
 
-                // إذا لم تتطابق البيانات مع أي فئة
-                err.innerText = "اسم المستخدم أو كلمة المرور غير صحيحة!";
-                err.style.display = 'block';
+                showError("اسم المستخدم أو كلمة المرور غير صحيحة!");
 
             } catch (e) {
                 console.error(e);
-                err.innerText = "حدث خطأ أثناء الاتصال بالسيرفر.";
-                err.style.display = 'block';
+                showError("حدث خطأ في الاتصال بالسيرفر، حاول مجدداً.");
             }
         };
+
+        function showSuccessAndRedirect(msg, page) {
+            succ.innerText = msg;
+            succ.style.display = 'block';
+            submitBtn.innerText = "تم الدخول بنجاح ✔️";
+            setTimeout(() => {
+                location.href = page;
+            }, 600);
+        }
+
+        function showError(msg) {
+            err.innerText = msg;
+            err.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerText = "تسجيل الدخول";
+        }
     </script>
 </body>
 </html>
