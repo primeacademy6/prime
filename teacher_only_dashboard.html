@@ -19,16 +19,20 @@
         
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); }
+        input, select, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); }
 
         .btn-red { background: var(--primary-red); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-edit { background: #0d6efd; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-edit { background: #0d6efd; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
         .btn-delete { background: #ff4d4d; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
         .btn-toggle { background: #ffc107; color: #000; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid var(--border-color); padding: 10px; text-align: right; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid var(--border-color); padding: 8px 12px; text-align: right; }
         th { background: var(--bg-color); }
+
+        .chapter-accordion { border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+        .chapter-header { background: var(--bg-color); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; border-right: 5px solid var(--primary-red); }
+        .chapter-body { padding: 15px; background: var(--card-bg); display: none; }
     </style>
 </head>
 <body>
@@ -43,52 +47,56 @@
 
     <div class="container">
         
-        <div class="card">
-            <h3 id="formTitle">🎬 إضافة محاضرة جديدة</h3>
-            <input type="hidden" id="editLecId">
-            <div class="form-group">
-                <label>اسم الفصل:</label>
-                <input type="text" id="lecChapter">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <!-- 1. إنشاء فصل -->
+            <div class="card">
+                <h3>📂 إنشاء فصل جديد للمادة</h3>
+                <div class="form-group">
+                    <label>اسم الفصل الجديد:</label>
+                    <input type="text" id="newChapterName" placeholder="مثال: الفصل الأول - الكهربائية">
+                </div>
+                <button class="btn-red" onclick="createChapter()">حفظ الفصل الجديد</button>
             </div>
-            <div class="form-group">
-                <label>عنوان المحاضرة:</label>
-                <input type="text" id="lecTitle">
+
+            <!-- 2. إضافة حلقة -->
+            <div class="card">
+                <h3 id="lecFormTitle">🎬 إضافة حلقة جديدة بداخل فصل</h3>
+                <input type="hidden" id="editLecId">
+                <div class="form-group">
+                    <label>اختر الفصل التابع:</label>
+                    <select id="lecChapterSelect"></select>
+                </div>
+                <div class="form-group">
+                    <label>عنوان المحاضرة / الحلقة:</label>
+                    <input type="text" id="lecTitle">
+                </div>
+                <div class="form-group">
+                    <label>رابط الفيديو المشفر (Embed Link):</label>
+                    <input type="text" id="lecUrl">
+                </div>
+                <div class="form-group">
+                    <label>وصف المحاضرة:</label>
+                    <textarea id="lecDesc" style="height:60px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>رابط الملزمة / PDF المرفق:</label>
+                    <input type="text" id="lecPdf">
+                </div>
+                <button class="btn-red" onclick="saveLecture()">حفظ الحلقة</button>
+                <button class="btn-toggle" id="cancelLecEdit" style="display:none;" onclick="resetLecForm()">إلغاء التعديل</button>
             </div>
-            <div class="form-group">
-                <label>رابط الفيديو المشفر (Embed Link):</label>
-                <input type="text" id="lecUrl">
-            </div>
-            <div class="form-group">
-                <label>وصف المحاضرة:</label>
-                <textarea id="lecDesc"></textarea>
-            </div>
-            <div class="form-group">
-                <label>رابط الملزمة / PDF المرفق:</label>
-                <input type="text" id="lecPdf">
-            </div>
-            <button class="btn-red" onclick="saveLecture()">حفظ المحاضرة</button>
-            <button class="btn-toggle" id="cancelEdit" style="display:none;" onclick="resetForm()">إلغاء التعديل</button>
         </div>
 
         <div class="card">
-            <h3>📋 المحاضرات الخاصة بمادتك</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>الفصل</th>
-                        <th>عنوان المحاضرة</th>
-                        <th>إجراء</th>
-                    </tr>
-                </thead>
-                <tbody id="myLecturesTable"></tbody>
-            </table>
+            <h3>📋 شجرة الفصول والحلقات المرفوعة مادتك</h3>
+            <div id="chaptersTreeContainer">جاري تحميل الفصول والحلقات...</div>
         </div>
 
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getDoc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBApoSZ-HXy9kd07tSJfuRdWkJcrbQVYf0",
@@ -103,20 +111,138 @@
         const db = getFirestore(app);
 
         const currentTeacherSubject = localStorage.getItem('prime_teacher_subject');
-        if (!currentTeacherSubject) {
-            location.href = 'index.html';
-        }
+        if (!currentTeacherSubject) { location.href = 'index.html'; }
 
         document.getElementById('teacherSubName').innerText = "المادة: " + currentTeacherSubject;
 
+        window.createChapter = async function() {
+            const name = document.getElementById('newChapterName').value.trim();
+            if (!name) return alert('يرجى كتابة اسم الفصل!');
+
+            try {
+                const chId = currentTeacherSubject + "_" + Date.now();
+                await setDoc(doc(db, "chapters", chId), {
+                    subject: currentTeacherSubject,
+                    name: name,
+                    createdAt: Date.now()
+                });
+                alert('تم إنشاء الفصل بنجاح!');
+                document.getElementById('newChapterName').value = '';
+                loadMyChaptersAndLectures();
+            } catch (e) { alert('خطأ: ' + e.message); }
+        };
+
+        async function loadMyChaptersAndLectures() {
+            const treeBox = document.getElementById('chaptersTreeContainer');
+            const lecChSelect = document.getElementById('lecChapterSelect');
+
+            treeBox.innerHTML = 'جاري التحميل...';
+            lecChSelect.innerHTML = '';
+
+            const qCh = query(collection(db, "chapters"), where("subject", "==", currentTeacherSubject));
+            const chSnap = await getDocs(qCh);
+
+            if (chSnap.empty) {
+                treeBox.innerHTML = '<p style="color:#666;">لا توجد فصول مضافة لهذه المادة بعد. أنشئ فصلاً جديداً أعلاه.</p>';
+                return;
+            }
+
+            treeBox.innerHTML = '';
+
+            const qLec = query(collection(db, "lectures"), where("subject", "==", currentTeacherSubject));
+            const lecSnap = await getDocs(qLec);
+            const lecturesMap = {};
+
+            lecSnap.forEach(d => {
+                const data = d.data();
+                const chName = data.chapter;
+                if (!lecturesMap[chName]) lecturesMap[chName] = [];
+                lecturesMap[chName].push({ id: d.id, ...data });
+            });
+
+            chSnap.forEach(chDoc => {
+                const chData = chDoc.data();
+                const chName = chData.name;
+                const chId = chDoc.id;
+
+                lecChSelect.innerHTML += `<option value="${chName}">${chName}</option>`;
+                const lecs = lecturesMap[chName] || [];
+
+                let lecsTableHtml = '';
+                if (lecs.length > 0) {
+                    lecsTableHtml = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>عنوان الحلقة / المحاضرة</th>
+                                    <th>إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${lecs.map(l => `
+                                    <tr>
+                                        <td>▶ ${l.title}</td>
+                                        <td style="width:120px;">
+                                            <button class="btn-edit" onclick="editLecture('${l.id}')">تعديل</button>
+                                            <button class="btn-delete" onclick="deleteLecture('${l.id}')">حذف</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    lecsTableHtml = '<p style="font-size:0.85rem; color:#888; margin:5px 0;">لا توجد حلقات مضافة داخل هذا الفصل بعد.</p>';
+                }
+
+                const accHtml = `
+                    <div class="chapter-accordion">
+                        <div class="chapter-header" onclick="toggleAccordion('ch_${chId}')">
+                            <span>📂 ${chName} (${lecs.length} حلقة)</span>
+                            <div>
+                                <button class="btn-edit" onclick="event.stopPropagation(); editChapter('${chId}', '${chName}')">تعديل اسم الفصل</button>
+                                <button class="btn-delete" onclick="event.stopPropagation(); deleteChapter('${chId}')">حذف الفصل</button>
+                            </div>
+                        </div>
+                        <div class="chapter-body" id="ch_${chId}">
+                            ${lecsTableHtml}
+                        </div>
+                    </div>
+                `;
+                treeBox.innerHTML += accHtml;
+            });
+        }
+
+        window.toggleAccordion = function(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        };
+
+        window.editChapter = async function(chId, oldName) {
+            const newName = prompt("تعديل اسم الفصل:", oldName);
+            if (newName && newName !== oldName) {
+                await updateDoc(doc(db, "chapters", chId), { name: newName });
+                alert('تم تعديل اسم الفصل بنجاح!');
+                loadMyChaptersAndLectures();
+            }
+        };
+
+        window.deleteChapter = async function(chId) {
+            if (confirm("حذف هذا الفصل؟")) {
+                await deleteDoc(doc(db, "chapters", chId));
+                loadMyChaptersAndLectures();
+            }
+        };
+
         window.saveLecture = async function() {
             const id = document.getElementById('editLecId').value;
-            const ch = document.getElementById('lecChapter').value.trim() || "الفصل الأول";
+            const ch = document.getElementById('lecChapterSelect').value;
             const title = document.getElementById('lecTitle').value.trim();
             const url = document.getElementById('lecUrl').value.trim();
             const desc = document.getElementById('lecDesc').value.trim();
             const pdf = document.getElementById('lecPdf').value.trim();
 
+            if (!ch) return alert('يرجى إنشاء فصل أولاً!');
             if (!title || !url) return alert('يرجى ملء العنوان والرابط!');
 
             try {
@@ -130,64 +256,41 @@
                     pdfUrl: pdf
                 }, { merge: true });
 
-                alert('تم حفظ المحاضرة بنجاح!');
-                resetForm();
-                loadMyLectures();
+                alert('تم حفظ الحلقة بنجاح!');
+                resetLecForm();
+                loadMyChaptersAndLectures();
             } catch (e) { alert('خطأ: ' + e.message); }
         };
-
-        async function loadMyLectures() {
-            const table = document.getElementById('myLecturesTable');
-            table.innerHTML = '';
-            
-            const q = query(collection(db, "lectures"), where("subject", "==", currentTeacherSubject));
-            const snap = await getDocs(q);
-
-            snap.forEach(d => {
-                const data = d.data();
-                table.innerHTML += `
-                    <tr>
-                        <td><b>${data.chapter}</b></td>
-                        <td>${data.title}</td>
-                        <td>
-                            <button class="btn-edit" onclick="editLecture('${d.id}')">تعديل</button>
-                            <button class="btn-delete" onclick="deleteLecture('${d.id}')">حذف</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
 
         window.editLecture = async function(id) {
             const snap = await getDoc(doc(db, "lectures", id));
             if (snap.exists()) {
                 const d = snap.data();
                 document.getElementById('editLecId').value = id;
-                document.getElementById('lecChapter').value = d.chapter;
+                document.getElementById('lecChapterSelect').value = d.chapter;
                 document.getElementById('lecTitle').value = d.title;
                 document.getElementById('lecUrl').value = d.videoUrl;
                 document.getElementById('lecDesc').value = d.desc || '';
                 document.getElementById('lecPdf').value = d.pdfUrl || '';
-                document.getElementById('formTitle').innerText = "✏️ تعديل المحاضرة";
-                document.getElementById('cancelEdit').style.display = "inline-block";
+                document.getElementById('lecFormTitle').innerText = "✏️ تعديل الحلقة";
+                document.getElementById('cancelLecEdit').style.display = "inline-block";
             }
         };
 
-        window.resetForm = function() {
+        window.resetLecForm = function() {
             document.getElementById('editLecId').value = '';
-            document.getElementById('lecChapter').value = '';
             document.getElementById('lecTitle').value = '';
             document.getElementById('lecUrl').value = '';
             document.getElementById('lecDesc').value = '';
             document.getElementById('lecPdf').value = '';
-            document.getElementById('formTitle').innerText = "🎬 إضافة محاضرة جديدة";
-            document.getElementById('cancelEdit').style.display = "none";
+            document.getElementById('lecFormTitle').innerText = "🎬 إضافة حلقة جديدة بداخل فصل";
+            document.getElementById('cancelLecEdit').style.display = "none";
         };
 
         window.deleteLecture = async function(id) {
-            if (confirm('هل تأكدت من حذف المحاضرة؟')) {
+            if (confirm('حذف هذه الحلقة؟')) {
                 await deleteDoc(doc(db, "lectures", id));
-                loadMyLectures();
+                loadMyChaptersAndLectures();
             }
         };
 
@@ -196,7 +299,7 @@
             location.href = 'index.html';
         };
 
-        loadMyLectures();
+        loadMyChaptersAndLectures();
     </script>
 </body>
 </html>
