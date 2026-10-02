@@ -53,7 +53,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBApoSZ-HXy9kd07tSJfuRdWkJcrbQVYf0",
@@ -73,12 +73,29 @@
         const err = document.getElementById('errorMsg');
         const succ = document.getElementById('successMsg');
 
-        // تفعيل زر Enter بالحاسبة والموبايل
+        // توليد أو جلب معرّف الجهاز الفريد للمتصفح الحالي
+        function getDeviceId() {
+            let devId = localStorage.getItem('prime_device_id');
+            if (!devId) {
+                devId = 'DEV_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+                localStorage.setItem('prime_device_id', devId);
+            }
+            return devId;
+        }
+
+        function getDeviceInfo() {
+            const ua = navigator.userAgent;
+            let platform = "جهاز غير معروف";
+            if (ua.includes("Win")) platform = "حاسوب Windows";
+            else if (ua.includes("Mac")) platform = "جهاز Mac";
+            else if (ua.includes("Android")) platform = "هاتف Android";
+            else if (ua.includes("iPhone") || ua.includes("iPad")) platform = "جهاز iOS / iPhone";
+            return platform;
+        }
+
         [loginUser, loginPass].forEach(input => {
             input.addEventListener('keyup', (e) => {
-                if (e.key === 'Enter' || e.keyCode === 13) {
-                    handleLogin();
-                }
+                if (e.key === 'Enter' || e.keyCode === 13) { handleLogin(); }
             });
         });
 
@@ -90,50 +107,59 @@
             succ.style.display = 'none';
 
             if (!user || !pass) {
-                err.innerText = "يرجى كتابة اسم المستخدم وكلمة المرور!";
-                err.style.display = 'block';
-                return;
+                return showError("يرجى كتابة اسم المستخدم وكلمة المرور!");
             }
 
-            // إعطاء تفاعل حي بالواجهة
             submitBtn.disabled = true;
             submitBtn.innerText = "جاري التحقق والربط...";
 
             try {
-                // 1. فحص حساب المدير العام
+                // 1. حساب الأدمن الرئيسي
                 if (user === 'admin' && pass === '123456') {
                     localStorage.setItem('prime_admin', 'true');
-                    showSuccessAndRedirect("تم تسجيل الدخول بنجاح! جاري التوجيه...", "teacher_dashboard.html");
-                    return;
+                    return showSuccessAndRedirect("تم تسجيل الدخول بنجاح! جاري التوجيه...", "teacher_dashboard.html");
                 }
 
-                // 2. فحص حسابات المدرسين
+                // 2. حسابات المدرسين
                 const teacherSnap = await getDoc(doc(db, "teachers", user));
                 if (teacherSnap.exists()) {
                     const tData = teacherSnap.data();
                     if (tData.password === pass) {
                         localStorage.setItem('prime_teacher_user', user);
                         localStorage.setItem('prime_teacher_subject', tData.subject);
-                        showSuccessAndRedirect("أهلاً بك يا أستاذ! جاري التوجيه للوحتك...", "teacher_only_dashboard.html");
-                        return;
+                        return showSuccessAndRedirect("أهلاً بك يا أستاذ! جاري التوجيه...", "teacher_only_dashboard.html");
                     }
                 }
 
-                // 3. فحص حسابات الطلاب
+                // 3. حسابات الطلاب (مع فحص الحظر وتقييد الجهاز)
                 const studentSnap = await getDoc(doc(db, "students", user));
                 if (studentSnap.exists()) {
                     const sData = studentSnap.data();
 
                     if (sData.disabled) {
-                        showError("حسابك معطل حالياً، يرجى مراجعة إدارة المنصة.");
-                        return;
+                        return showError("حسابك معطل حالياً، يرجى مراجعة إدارة المنصة.");
                     }
 
                     if (sData.password === pass) {
+                        const currentDevId = getDeviceId();
+                        const currentDevInfo = getDeviceInfo();
+                        const nowString = new Date().toLocaleString('ar-IQ');
+
+                        // فحص قفل الجهاز (Device Binding)
+                        if (sData.boundDeviceId && sData.boundDeviceId !== currentDevId) {
+                            return showError("⚠️ هذا الحساب مرتبط بجهاز آخر! لا يمكن فتح الحساب من جهازين بنفس الوقت.");
+                        }
+
+                        // تسجيل الجهاز والنشاط بـ Firestore
+                        await setDoc(doc(db, "students", user), {
+                            boundDeviceId: currentDevId,
+                            lastLoginTime: nowString,
+                            lastDeviceInfo: currentDevInfo
+                        }, { merge: true });
+
                         localStorage.setItem('prime_student_user', user);
                         localStorage.setItem('prime_student_name', sData.name || user);
-                        showSuccessAndRedirect("تم تسجيل الدخول بنجاح! جاري توجيهك للمواد...", "student_dashboard.html");
-                        return;
+                        return showSuccessAndRedirect("تم تسجيل الدخول بنجاح! جاري التوجيه...", "student_dashboard.html");
                     }
                 }
 
@@ -149,9 +175,7 @@
             succ.innerText = msg;
             succ.style.display = 'block';
             submitBtn.innerText = "تم الدخول بنجاح ✔️";
-            setTimeout(() => {
-                location.href = page;
-            }, 600);
+            setTimeout(() => { location.href = page; }, 600);
         }
 
         function showError(msg) {
