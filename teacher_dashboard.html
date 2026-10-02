@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - PRIME ACADEMY</title>
+    <title>لوحة التحكم الرئيسية - PRIME ACADEMY</title>
     <style>
         :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #1a1a1a; --primary-red: #dc3545; --border-color: #e9ecef; }
         [data-theme="dark"] { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #f1f1f1; --border-color: #2d2d2d; }
@@ -16,8 +16,8 @@
 
         .container { max-width: 1100px; margin: 30px auto; padding: 0 15px; }
         
-        .tabs { display: flex; gap: 10px; border-bottom: 2px solid var(--border-color); margin-bottom: 20px; }
-        .tab-btn { background: none; border: none; padding: 10px 20px; font-size: 1rem; font-weight: bold; cursor: pointer; color: var(--text-color); border-bottom: 3px solid transparent; }
+        .tabs { display: flex; gap: 10px; border-bottom: 2px solid var(--border-color); margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { background: none; border: none; padding: 10px 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; color: var(--text-color); border-bottom: 3px solid transparent; }
         .tab-btn.active { border-color: var(--primary-red); color: var(--primary-red); }
 
         .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
@@ -27,17 +27,23 @@
         input, select, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); }
 
         .btn-red { background: var(--primary-red); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        
+        .btn-edit { background: #0d6efd; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
+        .btn-delete { background: #ff4d4d; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-toggle { background: #ffc107; color: #000; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid var(--border-color); padding: 10px; text-align: right; }
         th { background: var(--bg-color); }
-        .btn-delete { background: #ff4d4d; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+
+        .student-info-box { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .info-item { background: var(--card-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
-        <span class="brand-logo"><span class="prime">PRIME</span> ACADEMY - لوحة التحكم</span>
+        <span class="brand-logo"><span class="prime">PRIME</span> ACADEMY - الإدارة العامة</span>
         <button class="btn-red" onclick="location.href='index.html'">تسجيل خروج</button>
     </nav>
 
@@ -45,76 +51,83 @@
         
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('subjectsTab')">📚 إدارة المواد والأغلفة</button>
-            <button class="tab-btn" onclick="switchTab('lecturesTab')">🎬 إضافة المحاضرات والفصول</button>
-            <button class="tab-btn" onclick="switchTab('studentsTab')">👥 تفعيل المواد للطلاب</button>
+            <button class="tab-btn" onclick="switchTab('lecturesTab')">🎬 المحاضرات والفصول</button>
+            <button class="tab-btn" onclick="switchTab('studentsTab')">👥 إدارة الطلاب والتفعيل</button>
+            <button class="tab-btn" onclick="switchTab('teachersTab')">👨‍🏫 حسابات المدرسين</button>
         </div>
 
         <!-- 1. تبويب إضافة وتعديل المواد -->
         <div id="subjectsTab" class="tab-content">
             <div class="card">
-                <h3>➕ إضافة مادة جديدة وسفيرة</h3>
+                <h3 id="subFormTitle">➕ إضافة مادة جديدة</h3>
+                <input type="hidden" id="editSubId">
                 <div class="form-group">
-                    <label>اسم المادة (مثال: الفيزياء):</label>
-                    <input type="text" id="newSubName" placeholder="اكتب اسم المادة بالضبط...">
+                    <label>اسم المادة:</label>
+                    <input type="text" id="newSubName">
                 </div>
                 <div class="form-group">
                     <label>اسم الأستاذ التدريسي:</label>
-                    <input type="text" id="newSubTeacher" placeholder="مثال: أ. علي الحسيني">
+                    <input type="text" id="newSubTeacher">
                 </div>
                 <div class="form-group">
-                    <label>رابط صورة كارت المادة (غلاف المادة):</label>
-                    <input type="text" id="newSubImg" placeholder="https://example.com/image.jpg">
+                    <label>اختيار صورة كارت المادة من الجهاز:</label>
+                    <input type="file" id="newSubImgFile" accept="image/*">
                 </div>
-                <button class="btn-red" onclick="addSubject()">حفظ المادة الجديدة</button>
+                <div class="form-group">
+                    <label>أو ضع رابط صورة المادة مباشر:</label>
+                    <input type="text" id="newSubImgUrl">
+                </div>
+                <button class="btn-red" onclick="saveSubject()">حفظ المادة</button>
+                <button class="btn-toggle" id="cancelSubEdit" style="display:none;" onclick="resetSubForm()">إلغاء التعديل</button>
             </div>
 
             <div class="card">
-                <h3>📋 قائمة المواد المضافة حالياً</h3>
+                <h3>📋 قائمة المواد المضافة</h3>
                 <table>
                     <thead>
                         <tr>
-                            <th>صورة غلاف المادة</th>
+                            <th>صورة الغلاف</th>
                             <th>المادة</th>
                             <th>التدريسي</th>
                             <th>إجراء</th>
                         </tr>
                     </thead>
-                    <tbody id="subjectsTable">
-                        <!-- يتم التحميل تلقائياً -->
-                    </tbody>
+                    <tbody id="subjectsTable"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- 2. تبويب إضافة المحاضرات وتنسيق الفصول -->
+        <!-- 2. تبويب إضافة وتعديل المحاضرات -->
         <div id="lecturesTab" class="tab-content" style="display: none;">
             <div class="card">
-                <h3>🎬 إضافة محاضرة جديدة</h3>
+                <h3 id="lecFormTitle">🎬 إضافة محاضرة جديدة</h3>
+                <input type="hidden" id="editLecId">
                 <div class="form-group">
-                    <label>اختر المادة:</label>
+                    <label>المادة:</label>
                     <select id="lectureSubSelect"></select>
                 </div>
                 <div class="form-group">
-                    <label>اسم الفصل (مثال: الفصل الأول - الكهربائية):</label>
-                    <input type="text" id="lecChapter" placeholder="حدد اسم الفصل لتجميع المحاضرات تحته">
+                    <label>اسم الفصل:</label>
+                    <input type="text" id="lecChapter">
                 </div>
                 <div class="form-group">
-                    <label>عنوان المحاضرة (مثال: المحاضرة 1 - المتسعات):</label>
-                    <input type="text" id="lecTitle" placeholder="عنوان المحاضرة">
+                    <label>عنوان المحاضرة:</label>
+                    <input type="text" id="lecTitle">
                 </div>
                 <div class="form-group">
                     <label>رابط الفيديو المشفر (Embed Link):</label>
-                    <input type="text" id="lecUrl" placeholder="رابط VdoCipher أو Bunny المشفر">
+                    <input type="text" id="lecUrl">
                 </div>
                 <div class="form-group">
-                    <label>وصف المحاضرة (اختياري):</label>
-                    <textarea id="lecDesc" placeholder="تفاصيل الدرس..."></textarea>
+                    <label>وصف المحاضرة:</label>
+                    <textarea id="lecDesc"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>رابط الملزمة / PDF (اختياري):</label>
-                    <input type="text" id="lecPdf" placeholder="رابط الملف المرفق">
+                    <label>رابط الملزمة / PDF:</label>
+                    <input type="text" id="lecPdf">
                 </div>
-                <button class="btn-red" onclick="addLecture()">نشر المحاضرة</button>
+                <button class="btn-red" onclick="saveLecture()">حفظ المحاضرة</button>
+                <button class="btn-toggle" id="cancelLecEdit" style="display:none;" onclick="resetLecForm()">إلغاء التعديل</button>
             </div>
 
             <div class="card">
@@ -128,28 +141,81 @@
                             <th>إجراء</th>
                         </tr>
                     </thead>
-                    <tbody id="lecturesTable">
-                        <!-- يتم التحميل تلقائياً -->
-                    </tbody>
+                    <tbody id="lecturesTable"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- 3. تبويب إدارة وصلاحيات الطلاب -->
+        <!-- 3. تبويب البحث والتحكم الشامل بالطلاب -->
         <div id="studentsTab" class="tab-content" style="display: none;">
             <div class="card">
-                <h3>⚙️ تحديد المواد المفعلة للطالب</h3>
+                <h3>🔍 البحث عن طالب وتفعيل المواد</h3>
                 <div class="form-group">
-                    <label>اختر يوزر الطالب:</label>
-                    <select id="studentSelect" onchange="loadStudentPermissions()"></select>
+                    <label>بحث باسم الطالب أو اليوزر:</label>
+                    <input type="text" id="studentSearch" oninput="filterStudents()" placeholder="اكتب للبحث السريع...">
                 </div>
                 <div class="form-group">
-                    <label>المواد المسموح مشاهدتها:</label>
-                    <div id="studentSubjectsBoxes" style="margin-top: 10px;">
-                        <!-- يتم تحميل خيارات الصح والخطأ تلقائياً -->
+                    <label>اختر الطالب:</label>
+                    <select id="studentSelect" onchange="loadStudentDetails()"></select>
+                </div>
+
+                <!-- كارت معلومات الطالب المختار -->
+                <div id="studentDetailBox" class="student-info-box" style="display: none;">
+                    <h4>📄 كافة معلومات الطالب الحالية:</h4>
+                    <div class="info-grid">
+                        <div class="info-item"><b>الاسم الكامل:</b> <span id="stName"></span></div>
+                        <div class="info-item"><b>اسم المستخدم (User):</b> <span id="stUser"></span></div>
+                        <div class="info-item"><b>كلمة المرور:</b> <span id="stPass"></span></div>
+                        <div class="info-item"><b>رقم الطالب:</b> <span id="stPhone"></span></div>
+                        <div class="info-item"><b>رقم ولي الأمر:</b> <span id="stParentPhone"></span></div>
+                        <div class="info-item"><b>حالة الحساب:</b> <span id="stStatus"></span></div>
                     </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <button class="btn-toggle" id="btnToggleStatus" onclick="toggleStudentAccount()">تغيير حالة الحساب</button>
+                        <button class="btn-delete" onclick="deleteStudentAccount()">حذف الحساب نهائياً</button>
+                    </div>
+
+                    <h4>📚 المواد المفعّلة للحساب:</h4>
+                    <div id="studentSubjectsBoxes" style="margin-top: 10px;"></div>
+                    <br>
+                    <button class="btn-red" onclick="saveStudentPermissions()">حفظ المواد المفعلة</button>
                 </div>
-                <button class="btn-red" onclick="saveStudentPermissions()">حفظ صلاحيات الطالب</button>
+            </div>
+        </div>
+
+        <!-- 4. تبويب إنشاء حسابات التدريسيين -->
+        <div id="teachersTab" class="tab-content" style="display: none;">
+            <div class="card">
+                <h3>👨‍🏫 إنشاء حساب أستاذ (لوحة خاصة للمادة)</h3>
+                <div class="form-group">
+                    <label>المادة المخصصة للأستاذ:</label>
+                    <select id="teacherSubSelect"></select>
+                </div>
+                <div class="form-group">
+                    <label>اسم المستخدم للتدريسي (Username):</label>
+                    <input type="text" id="teacherUser">
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور:</label>
+                    <input type="text" id="teacherPass">
+                </div>
+                <button class="btn-red" onclick="createTeacherAccount()">إنشاء حساب أستاذ</button>
+            </div>
+
+            <div class="card">
+                <h3>📋 حسابات المدرسين المسجلة</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>المادة</th>
+                            <th>اليوزر</th>
+                            <th>الباسورد</th>
+                            <th>إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teachersTable"></tbody>
+                </table>
             </div>
         </div>
 
@@ -171,6 +237,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        let allStudentsList = [];
+
         window.switchTab = function(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -178,55 +246,100 @@
             event.target.classList.add('active');
         };
 
-        // --- إدارة المواد ---
-        window.addSubject = async function() {
+        // --- إدارة المواد وتعديلها مع رفع الصور ---
+        window.saveSubject = async function() {
+            const id = document.getElementById('editSubId').value;
             const name = document.getElementById('newSubName').value.trim();
             const teacher = document.getElementById('newSubTeacher').value.trim();
-            const img = document.getElementById('newSubImg').value.trim();
+            const urlInput = document.getElementById('newSubImgUrl').value.trim();
+            const fileInput = document.getElementById('newSubImgFile').files[0];
 
             if (!name) return alert('يرجى كتابة اسم المادة!');
 
+            let finalImg = urlInput || "https://via.placeholder.com/300x150?text=" + encodeURIComponent(name);
+
+            if (fileInput) {
+                finalImg = await new Promise((res) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => res(e.target.result);
+                    reader.readAsDataURL(fileInput);
+                });
+            }
+
             try {
-                await setDoc(doc(db, "subjects", name), {
+                const subId = id || name;
+                await setDoc(doc(db, "subjects", subId), {
                     name: name,
                     teacherName: teacher || "الأستاذ المباشر",
-                    imageUrl: img || "https://via.placeholder.com/300x150?text=" + encodeURIComponent(name)
-                });
-                alert('تمت إضافة المادة بنجاح!');
-                location.reload();
-            } catch (e) { alert('حدث خطأ: ' + e.message); }
+                    imageUrl: finalImg
+                }, { merge: true });
+
+                alert('تم حفظ المادة بنجاح!');
+                resetSubForm();
+                loadSubjects();
+            } catch (e) { alert('خطأ: ' + e.message); }
         };
 
         async function loadSubjects() {
             const table = document.getElementById('subjectsTable');
             const lecSelect = document.getElementById('lectureSubSelect');
+            const teachSelect = document.getElementById('teacherSubSelect');
             table.innerHTML = '';
             lecSelect.innerHTML = '';
+            if(teachSelect) teachSelect.innerHTML = '';
 
             const snap = await getDocs(collection(db, "subjects"));
             snap.forEach(d => {
                 const data = d.data();
                 table.innerHTML += `
                     <tr>
-                        <td><img src="${data.imageUrl}" style="width: 80px; height:45px; object-fit:cover; border-radius:4px;"></td>
+                        <td><img src="${data.imageUrl}" style="width: 70px; height:40px; object-fit:cover; border-radius:4px;"></td>
                         <td><b>${data.name}</b></td>
                         <td>${data.teacherName}</td>
-                        <td><button class="btn-delete" onclick="deleteSubject('${d.id}')">حذف</button></td>
+                        <td>
+                            <button class="btn-edit" onclick="editSubject('${d.id}')">تعديل</button>
+                            <button class="btn-delete" onclick="deleteSubject('${d.id}')">حذف</button>
+                        </td>
                     </tr>
                 `;
                 lecSelect.innerHTML += `<option value="${data.name}">${data.name}</option>`;
+                if(teachSelect) teachSelect.innerHTML += `<option value="${data.name}">${data.name}</option>`;
             });
         }
 
+        window.editSubject = async function(id) {
+            const snap = await getDoc(doc(db, "subjects", id));
+            if (snap.exists()) {
+                const d = snap.data();
+                document.getElementById('editSubId').value = id;
+                document.getElementById('newSubName').value = d.name;
+                document.getElementById('newSubTeacher').value = d.teacherName;
+                document.getElementById('newSubImgUrl').value = d.imageUrl;
+                document.getElementById('subFormTitle').innerText = "✏️ تعديل المادة";
+                document.getElementById('cancelSubEdit').style.display = "inline-block";
+            }
+        };
+
+        window.resetSubForm = function() {
+            document.getElementById('editSubId').value = '';
+            document.getElementById('newSubName').value = '';
+            document.getElementById('newSubTeacher').value = '';
+            document.getElementById('newSubImgUrl').value = '';
+            document.getElementById('newSubImgFile').value = '';
+            document.getElementById('subFormTitle').innerText = "➕ إضافة مادة جديدة";
+            document.getElementById('cancelSubEdit').style.display = "none";
+        };
+
         window.deleteSubject = async function(id) {
-            if (confirm('هل أنت تأكد من حذف هذه المادة؟')) {
+            if (confirm('حذف هذه المادة؟')) {
                 await deleteDoc(doc(db, "subjects", id));
                 loadSubjects();
             }
         };
 
-        // --- إدارة المحاضرات ---
-        window.addLecture = async function() {
+        // --- إدارة وتعديل المحاضرات ---
+        window.saveLecture = async function() {
+            const id = document.getElementById('editLecId').value;
             const sub = document.getElementById('lectureSubSelect').value;
             const ch = document.getElementById('lecChapter').value.trim() || "الفصل الأول";
             const title = document.getElementById('lecTitle').value.trim();
@@ -234,10 +347,10 @@
             const desc = document.getElementById('lecDesc').value.trim();
             const pdf = document.getElementById('lecPdf').value.trim();
 
-            if (!title || !url) return alert('يرجى ملء العنوان والرابط المشفر!');
+            if (!title || !url) return alert('يرجى ملء العنوان والرابط!');
 
             try {
-                const lecId = Date.now().toString();
+                const lecId = id || Date.now().toString();
                 await setDoc(doc(db, "lectures", lecId), {
                     subject: sub,
                     chapter: ch,
@@ -245,8 +358,10 @@
                     videoUrl: url,
                     desc: desc,
                     pdfUrl: pdf
-                });
-                alert('تم نشر المحاضرة بنجاح!');
+                }, { merge: true });
+
+                alert('تم حفظ المحاضرة بنجاح!');
+                resetLecForm();
                 loadLectures();
             } catch (e) { alert('خطأ: ' + e.message); }
         };
@@ -262,50 +377,133 @@
                         <td>${data.subject}</td>
                         <td><b>${data.chapter}</b></td>
                         <td>${data.title}</td>
-                        <td><button class="btn-delete" onclick="deleteLecture('${d.id}')">حذف</button></td>
+                        <td>
+                            <button class="btn-edit" onclick="editLecture('${d.id}')">تعديل</button>
+                            <button class="btn-delete" onclick="deleteLecture('${d.id}')">حذف</button>
+                        </td>
                     </tr>
                 `;
             });
         }
 
+        window.editLecture = async function(id) {
+            const snap = await getDoc(doc(db, "lectures", id));
+            if (snap.exists()) {
+                const d = snap.data();
+                document.getElementById('editLecId').value = id;
+                document.getElementById('lectureSubSelect').value = d.subject;
+                document.getElementById('lecChapter').value = d.chapter;
+                document.getElementById('lecTitle').value = d.title;
+                document.getElementById('lecUrl').value = d.videoUrl;
+                document.getElementById('lecDesc').value = d.desc || '';
+                document.getElementById('lecPdf').value = d.pdfUrl || '';
+                document.getElementById('lecFormTitle').innerText = "✏️ تعديل المحاضرة";
+                document.getElementById('cancelLecEdit').style.display = "inline-block";
+            }
+        };
+
+        window.resetLecForm = function() {
+            document.getElementById('editLecId').value = '';
+            document.getElementById('lecChapter').value = '';
+            document.getElementById('lecTitle').value = '';
+            document.getElementById('lecUrl').value = '';
+            document.getElementById('lecDesc').value = '';
+            document.getElementById('lecPdf').value = '';
+            document.getElementById('lecFormTitle').innerText = "🎬 إضافة محاضرة جديدة";
+            document.getElementById('cancelLecEdit').style.display = "none";
+        };
+
         window.deleteLecture = async function(id) {
-            if (confirm('حذف هذه المحاضرة؟')) {
+            if (confirm('حذف المحاضرة؟')) {
                 await deleteDoc(doc(db, "lectures", id));
                 loadLectures();
             }
         };
 
-        // --- إدارة الطلاب والصلاحيات ---
+        // --- البحث المتقدم والتحكم الشامل بالطلاب ---
         async function loadStudents() {
-            const studentSelect = document.getElementById('studentSelect');
-            studentSelect.innerHTML = '';
+            allStudentsList = [];
             const snap = await getDocs(collection(db, "students"));
             snap.forEach(d => {
-                studentSelect.innerHTML += `<option value="${d.id}">${d.data().name || d.id} (${d.id})</option>`;
+                allStudentsList.push({ id: d.id, ...d.data() });
             });
-            loadStudentPermissions();
+            filterStudents();
         }
 
-        window.loadStudentPermissions = async function() {
-            const studentId = document.getElementById('studentSelect').value;
-            const container = document.getElementById('studentSubjectsBoxes');
-            container.innerHTML = '';
+        window.filterStudents = function() {
+            const queryText = document.getElementById('studentSearch').value.toLowerCase();
+            const select = document.getElementById('studentSelect');
+            select.innerHTML = '<option value="">-- اختر طالباً --</option>';
 
-            if (!studentId) return;
+            allStudentsList.filter(s => 
+                (s.name && s.name.toLowerCase().includes(queryText)) || 
+                s.id.toLowerCase().includes(queryText)
+            ).forEach(s => {
+                select.innerHTML += `<option value="${s.id}">${s.name || s.id} (@${s.id})</option>`;
+            });
+        };
+
+        window.loadStudentDetails = async function() {
+            const studentId = document.getElementById('studentSelect').value;
+            const box = document.getElementById('studentDetailBox');
+
+            if (!studentId) {
+                box.style.display = "none";
+                return;
+            }
 
             const studentSnap = await getDoc(doc(db, "students", studentId));
-            const allowed = studentSnap.exists() ? (studentSnap.data().allowedSubjects || []) : [];
+            if (studentSnap.exists()) {
+                const d = studentSnap.data();
+                box.style.display = "block";
 
-            const subSnap = await getDocs(collection(db, "subjects"));
-            subSnap.forEach(d => {
-                const subName = d.data().name;
-                const isChecked = allowed.includes(subName) ? 'checked' : '';
-                container.innerHTML += `
-                    <label style="display:inline-block; margin-left: 15px; font-weight:normal;">
-                        <input type="checkbox" class="sub-check" value="${subName}" ${isChecked}> ${subName}
-                    </label>
-                `;
-            });
+                document.getElementById('stName').innerText = d.name || 'غير محدد';
+                document.getElementById('stUser').innerText = studentId;
+                document.getElementById('stPass').innerText = d.password || '******';
+                document.getElementById('stPhone').innerText = d.phone || 'غير مسجل';
+                document.getElementById('stParentPhone').innerText = d.parentPhone || 'غير مسجل';
+
+                const disabled = d.disabled || false;
+                document.getElementById('stStatus').innerText = disabled ? '🔴 معطل' : '🟢 نشط';
+                document.getElementById('btnToggleStatus').innerText = disabled ? 'تنشيط الحساب' : 'تعطيل الحساب';
+
+                // تحميل خيارات المواد المفعلة
+                const allowed = d.allowedSubjects || [];
+                const container = document.getElementById('studentSubjectsBoxes');
+                container.innerHTML = '';
+
+                const subSnap = await getDocs(collection(db, "subjects"));
+                subSnap.forEach(subDoc => {
+                    const subName = subDoc.data().name;
+                    const isChecked = allowed.includes(subName) ? 'checked' : '';
+                    container.innerHTML += `
+                        <label style="display:inline-block; margin-left: 15px;">
+                            <input type="checkbox" class="sub-check" value="${subName}" ${isChecked}> ${subName}
+                        </label>
+                    `;
+                });
+            }
+        };
+
+        window.toggleStudentAccount = async function() {
+            const studentId = document.getElementById('studentSelect').value;
+            const studentSnap = await getDoc(doc(db, "students", studentId));
+            if (studentSnap.exists()) {
+                const currentStatus = studentSnap.data().disabled || false;
+                await setDoc(doc(db, "students", studentId), { disabled: !currentStatus }, { merge: true });
+                alert('تم تغيير حالة الحساب بنجاح!');
+                loadStudents();
+            }
+        };
+
+        window.deleteStudentAccount = async function() {
+            const studentId = document.getElementById('studentSelect').value;
+            if (confirm(`هل أنت متأكد من حذف حساب الطالب @${studentId} نهائياً؟`)) {
+                await deleteDoc(doc(db, "students", studentId));
+                alert('تم حذف الحساب نهائياً.');
+                document.getElementById('studentDetailBox').style.display = "none";
+                loadStudents();
+            }
         };
 
         window.saveStudentPermissions = async function() {
@@ -314,16 +512,62 @@
             const selectedSubs = Array.from(checkboxes).map(cb => cb.value);
 
             try {
-                await setDoc(doc(db, "students", studentId), {
+                await setDoc(doc(doc(db, "students", studentId)), {
                     allowedSubjects: selectedSubs
                 }, { merge: true });
                 alert('تم تحديث المواد المسموحة للطالب بنجاح!');
             } catch (e) { alert('خطأ: ' + e.message); }
         };
 
+        // --- إنشاء إدارة حسابات المدرسين الخاصين ---
+        window.createTeacherAccount = async function() {
+            const sub = document.getElementById('teacherSubSelect').value;
+            const user = document.getElementById('teacherUser').value.trim();
+            const pass = document.getElementById('teacherPass').value.trim();
+
+            if (!user || !pass) return alert('يرجى ملء كافة البيانات!');
+
+            try {
+                await setDoc(doc(db, "teachers", user), {
+                    username: user,
+                    password: pass,
+                    subject: sub
+                });
+                alert('تم إنشاء حساب التدريسي بنجاح!');
+                document.getElementById('teacherUser').value = '';
+                document.getElementById('teacherPass').value = '';
+                loadTeachers();
+            } catch (e) { alert('خطأ: ' + e.message); }
+        };
+
+        async function loadTeachers() {
+            const table = document.getElementById('teachersTable');
+            table.innerHTML = '';
+            const snap = await getDocs(collection(db, "teachers"));
+            snap.forEach(d => {
+                const data = d.data();
+                table.innerHTML += `
+                    <tr>
+                        <td><b>${data.subject}</b></td>
+                        <td>${data.username}</td>
+                        <td>${data.password}</td>
+                        <td><button class="btn-delete" onclick="deleteTeacher('${d.id}')">حذف</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        window.deleteTeacher = async function(id) {
+            if (confirm('حذف حساب هذا المدرس؟')) {
+                await deleteDoc(doc(db, "teachers", id));
+                loadTeachers();
+            }
+        };
+
         loadSubjects();
         loadLectures();
         loadStudents();
+        loadTeachers();
     </script>
 </body>
 </html>
