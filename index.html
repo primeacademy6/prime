@@ -73,14 +73,26 @@
         const err = document.getElementById('errorMsg');
         const succ = document.getElementById('successMsg');
 
-        // توليد أو جلب معرّف الجهاز الفريد للمتصفح الحالي
-        function getDeviceId() {
-            let devId = localStorage.getItem('prime_device_id');
-            if (!devId) {
-                devId = 'DEV_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
-                localStorage.setItem('prime_device_id', devId);
+        // توليد بصمة جهاز ثابتة للابتوب بدمج مواصفات النظام والشاشة بدون التأثر بمسح LocalStorage
+        function getStableDeviceFingerprint() {
+            const nav = window.navigator;
+            const screen = window.screen;
+            const rawString = [
+                nav.userAgent,
+                nav.platform,
+                screen.width + 'x' + screen.height,
+                screen.colorDepth,
+                nav.hardwareConcurrency || 1
+            ].join('|');
+
+            // تحويل السلسلة إلى Hash بسيط وثابت
+            let hash = 0;
+            for (let i = 0; i < rawString.length; i++) {
+                const char = rawString.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash |= 0;
             }
-            return devId;
+            return 'DEV_FINGERPRINT_' + Math.abs(hash);
         }
 
         function getDeviceInfo() {
@@ -114,7 +126,7 @@
             submitBtn.innerText = "جاري التحقق والربط...";
 
             try {
-                // 1. حساب الأدمن الرئيسي
+                // 1. حساب الأدمن
                 if (user === 'admin' && pass === '123456') {
                     localStorage.setItem('prime_admin', 'true');
                     return showSuccessAndRedirect("تم تسجيل الدخول بنجاح! جاري التوجيه...", "teacher_dashboard.html");
@@ -131,7 +143,7 @@
                     }
                 }
 
-                // 3. حسابات الطلاب (مع فحص الحظر وتقييد الجهاز)
+                // 3. حسابات الطلاب (مع بصمة الجهاز الثابتة)
                 const studentSnap = await getDoc(doc(db, "students", user));
                 if (studentSnap.exists()) {
                     const sData = studentSnap.data();
@@ -141,18 +153,18 @@
                     }
 
                     if (sData.password === pass) {
-                        const currentDevId = getDeviceId();
+                        const currentDevFingerprint = getStableDeviceFingerprint();
                         const currentDevInfo = getDeviceInfo();
                         const nowString = new Date().toLocaleString('ar-IQ');
 
-                        // فحص قفل الجهاز (Device Binding)
-                        if (sData.boundDeviceId && sData.boundDeviceId !== currentDevId) {
+                        // فحص قفل الجهاز بـ Fingerprint الثابت
+                        if (sData.boundDeviceId && sData.boundDeviceId !== currentDevFingerprint) {
                             return showError("⚠️ هذا الحساب مرتبط بجهاز آخر! لا يمكن فتح الحساب من جهازين بنفس الوقت.");
                         }
 
-                        // تسجيل الجهاز والنشاط بـ Firestore
+                        // تسجيل/ربط الجهاز بـ Firestore
                         await setDoc(doc(db, "students", user), {
-                            boundDeviceId: currentDevId,
+                            boundDeviceId: currentDevFingerprint,
                             lastLoginTime: nowString,
                             lastDeviceInfo: currentDevInfo
                         }, { merge: true });
