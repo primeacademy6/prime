@@ -3,128 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>موادي - PRIME ACADEMY</title>
+    <title>لوحة الطالب - PRIME ACADEMY</title>
     <style>
-        :root {
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-color: #1a1a1a;
-            --primary-red: #dc3545;
-            --border-color: #e9ecef;
-        }
-
-        [data-theme="dark"] {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #f1f1f1;
-            --border-color: #2d2d2d;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: system-ui, -apple-system, sans-serif;
-            margin: 0;
-            direction: rtl;
-        }
-
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            background-color: var(--card-bg);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .brand-logo {
-            font-size: 1.5rem;
-            font-weight: 800;
-            text-decoration: none;
-        }
+        :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #1a1a1a; --primary-red: #dc3545; --border-color: #e9ecef; }
+        [data-theme="dark"] { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #f1f1f1; --border-color: #2d2d2d; }
+        
+        body { background: var(--bg-color); color: var(--text-color); font-family: system-ui, sans-serif; margin: 0; direction: rtl; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--card-bg); border-bottom: 1px solid var(--border-color); }
+        .brand-logo { font-size: 1.5rem; font-weight: 800; cursor: pointer; }
         .brand-logo .prime { color: var(--primary-red); }
-        .brand-logo .academy { color: var(--text-color); }
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 15px; }
 
-        .container {
-            max-width: 900px;
-            margin: 30px auto;
-            padding: 0 15px;
-        }
-
-        .grid {
+        .subjects-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
             margin-top: 20px;
         }
 
         .subject-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 25px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.1rem;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
             cursor: pointer;
-            text-decoration: none;
-            color: var(--text-color);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            transition: border-color 0.2s, transform 0.2s;
         }
 
         .subject-card:hover {
-            border-color: var(--primary-red);
-            transform: translateY(-2px);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
 
-        .theme-btn {
-            background: none;
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            padding: 6px 14px;
-            border-radius: 20px;
-            cursor: pointer;
+        .subject-img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            background: #e0e0e0;
         }
+
+        .subject-details { padding: 15px; }
+        .subject-title { font-size: 1.2rem; font-weight: bold; margin: 0 0 5px 0; }
+        .teacher-name { color: var(--primary-red); font-size: 0.9rem; font-weight: 600; margin: 0; }
+        .btn-logout { background: transparent; border: 1px solid var(--primary-red); color: var(--primary-red); padding: 6px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
-        <a href="index.html" class="brand-logo">
-            <span class="prime">PRIME</span> <span class="academy">ACADEMY</span>
-        </a>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <span id="studentNameDisplay" style="font-weight: 600;"></span>
-            <button class="theme-btn" onclick="toggleTheme()">🌙 الوضع الليلي</button>
-            <a href="student_login.html" style="color: var(--primary-red); text-decoration: none; font-weight: bold;">تسجيل خروج</a>
+        <span class="brand-logo"><span class="prime">PRIME</span> ACADEMY</span>
+        <div>
+            <span id="studentWelcome" style="margin-left: 15px; font-weight: bold;"></span>
+            <button class="btn-logout" onclick="logout()">تسجيل خروج</button>
         </div>
     </nav>
 
     <div class="container">
-        <h3>المواد المفعلة بحسابك</h3>
-        <div class="grid" id="allowedSubjects">
-            <div class="subject-card" onclick="openSubject('الرياضيات')">الرياضيات</div>
-            <div class="subject-card" onclick="openSubject('الفيزياء')">الفيزياء</div>
-            <div class="subject-card" onclick="openSubject('الكيمياء')">الكيمياء</div>
-            <div class="subject-card" onclick="openSubject('الأحياء')">الأحياء</div>
+        <h2>📚 المواد المفعّلة بحسابك</h2>
+        <div class="subjects-grid" id="subjectsContainer">
+            <p id="loadingMsg">جاري تحميل المواد المفعّلة...</p>
         </div>
     </div>
 
-    <script>
-        // قراءة اسم الطالب المحفوظ عند الدخول
-        const studentId = localStorage.getItem('current_student_id') || 'طالب';
-        document.getElementById('studentNameDisplay').innerText = "الطالب: " + studentId;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        function openSubject(subjectName) {
-            localStorage.setItem('selected_subject', subjectName);
-            window.location.href = "watch_lecture.html";
+        const firebaseConfig = {
+            apiKey: "AIzaSyBApoSZ-HXy9kd07tSJfuRdWkJcrbQVYf0",
+            authDomain: "qmove1.firebaseapp.com",
+            projectId: "qmove1",
+            storageBucket: "qmove1.firebasestorage.app",
+            messagingSenderId: "166464805371",
+            appId: "1:166464805371:web:d65b0cb8b141e4b894935e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const currentStudentUser = localStorage.getItem('prime_student_user');
+        if (!currentStudentUser) {
+            location.href = 'index.html';
         }
 
-        function toggleTheme() {
-            const html = document.documentElement;
-            html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        document.getElementById('studentWelcome').innerText = "الطالب: " + (localStorage.getItem('prime_student_name') || currentStudentUser);
+
+        async function loadAllowedSubjects() {
+            const container = document.getElementById('subjectsContainer');
+            try {
+                // جلب بيانات الطالب للتعرف على المواد المفعلة له
+                const studentRef = doc(db, "students", currentStudentUser);
+                const studentSnap = await getDoc(studentRef);
+
+                if (studentSnap.exists()) {
+                    const allowedSubjects = studentSnap.data().allowedSubjects || [];
+
+                    if (allowedSubjects.length === 0) {
+                        container.innerHTML = "<p>لا توجد مواد مفعلة بحسابك حالياً. يرجى التواصل مع الإدارة.</p>";
+                        return;
+                    }
+
+                    // جلب جميع تفاصيل المواد من Firestore
+                    const subjectsSnap = await getDocs(collection(db, "subjects"));
+                    container.innerHTML = "";
+
+                    subjectsSnap.forEach(docSnap => {
+                        const subData = docSnap.data();
+                        const subName = subData.name || docSnap.id;
+
+                        // عرض المادة فقط إذا كانت مسموحة للطالب
+                        if (allowedSubjects.includes(subName)) {
+                            const imgUrl = subData.imageUrl || 'https://via.placeholder.com/300x150?text=' + encodeURIComponent(subName);
+                            const teacher = subData.teacherName || 'الأستاذ المباشر';
+
+                            const cardHtml = `
+                                <div class="subject-card" onclick="selectSubject('${subName}')">
+                                    <img src="${imgUrl}" class="subject-img" alt="${subName}">
+                                    <div class="subject-details">
+                                        <h3 class="subject-title">${subName}</h3>
+                                        <p class="teacher-name">👨‍🏫 الأستاذ: ${teacher}</p>
+                                    </div>
+                                </div>
+                            `;
+                            container.innerHTML += cardHtml;
+                        }
+                    });
+
+                } else {
+                    container.innerHTML = "<p>خطأ في جلب بيانات الحساب.</p>";
+                }
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = "<p>حدث خطأ أثناء تحميل المواد.</p>";
+            }
         }
+
+        window.selectSubject = function(subName) {
+            localStorage.setItem('prime_selected_subject', subName);
+            location.href = 'watch_lecture.html';
+        };
+
+        window.logout = function() {
+            localStorage.clear();
+            location.href = 'index.html';
+        };
+
+        loadAllowedSubjects();
     </script>
 </body>
 </html>
