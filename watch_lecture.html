@@ -5,185 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مشاهدة المحاضرة - PRIME ACADEMY</title>
     <style>
-        :root { 
-            --bg-color: #f8f9fa; 
-            --card-bg: #ffffff; 
-            --text-color: #1a1a1a; 
-            --primary-red: #dc3545; 
-            --border-color: #e9ecef; 
-        }
+        :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #1a1a1a; --primary-red: #dc3545; --border-color: #e9ecef; }
+        [data-theme="dark"] { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #f1f1f1; --border-color: #2d2d2d; }
         
-        [data-theme="dark"] { 
-            --bg-color: #121212; 
-            --card-bg: #1e1e1e; 
-            --text-color: #f1f1f1; 
-            --border-color: #2d2d2d; 
-        }
-        
-        * {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            box-sizing: border-box;
-        }
-
-        body { 
-            background: var(--bg-color); 
-            color: var(--text-color); 
-            font-family: system-ui, -apple-system, sans-serif; 
-            margin: 0; 
-            direction: rtl; 
-        }
-
-        .navbar { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 1rem 2rem; 
-            background: var(--card-bg); 
-            border-bottom: 1px solid var(--border-color); 
-        }
-
-        .brand-logo { 
-            font-size: 1.5rem; 
-            font-weight: 800; 
-            cursor: pointer; 
-        }
-
+        * { box-sizing: border-box; user-select: none; }
+        body { background: var(--bg-color); color: var(--text-color); font-family: system-ui, sans-serif; margin: 0; direction: rtl; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--card-bg); border-bottom: 1px solid var(--border-color); }
+        .brand-logo { font-size: 1.5rem; font-weight: 800; cursor: pointer; }
         .brand-logo .prime { color: var(--primary-red); }
 
-        .container { 
-            max-width: 880px; 
-            margin: 20px auto; 
-            padding: 0 15px; 
-        }
+        .main-layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; max-width: 1250px; margin: 20px auto; padding: 0 15px; }
 
-        .video-box {
-            position: relative;
-            width: 100%;
-            height: 480px;
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .video-box { position: relative; width: 100%; height: 480px; background: #000; border-radius: 12px; overflow: hidden; }
+        .video-box iframe, .video-box video { width: 100%; height: 100%; border: none; }
 
-        .video-box iframe, .video-box video {
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: block;
-        }
+        .watermark { position: absolute; color: rgba(255, 255, 255, 0.4); font-size: 1rem; font-weight: bold; pointer-events: none; z-index: 2147483647 !important; padding: 4px 10px; background: rgba(0,0,0,0.35); border-radius: 6px; transition: top 2.5s ease, left 2.5s ease; font-family: monospace; direction: ltr; }
+        
+        .btn-fullscreen { background: rgba(220, 53, 69, 0.85); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; position: absolute; top: 12px; left: 12px; z-index: 2147483646; font-size: 0.8rem; font-weight: bold; }
 
-        /* العلامة المائية المحمية */
-        .watermark {
-            position: absolute;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 1.05rem;
-            font-weight: bold;
-            pointer-events: none;
-            user-select: none;
-            z-index: 2147483647 !important;
-            font-family: monospace;
-            direction: ltr;
-            padding: 5px 12px;
-            background: rgba(0,0,0,0.35);
-            border-radius: 6px;
-            transition: top 2.5s ease, left 2.5s ease;
-        }
+        /* القائمة الجانبية للفصول والحلقات */
+        .sidebar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; height: 600px; overflow-y: auto; }
+        .chapter-title { background: var(--bg-color); padding: 10px; border-radius: 6px; font-weight: bold; margin-top: 15px; border-right: 4px solid var(--primary-red); }
+        .lecture-item { padding: 10px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.95rem; transition: background 0.2s; border-radius: 4px; margin-top: 5px; }
+        .lecture-item:hover, .lecture-item.active { background: rgba(220, 53, 69, 0.1); color: var(--primary-red); font-weight: bold; }
 
-        .card { 
-            background: var(--card-bg); 
-            border: 1px solid var(--border-color); 
-            border-radius: 10px; 
-            padding: 20px; 
-            margin-top: 20px; 
-        }
-
-        textarea { 
-            width: 100%; 
-            height: 80px; 
-            padding: 10px; 
-            border-radius: 6px; 
-            border: 1px solid var(--border-color); 
-            background: var(--bg-color); 
-            color: var(--text-color); 
-            box-sizing: border-box; 
-        }
-
-        .btn-red { 
-            background: var(--primary-red); 
-            color: white; 
-            border: none; 
-            padding: 8px 20px; 
-            border-radius: 6px; 
-            font-weight: bold; 
-            cursor: pointer; 
-        }
-
-        /* زر ملء الشاشة الوحيد التابع لنا */
-        .btn-fullscreen {
-            background: rgba(220, 53, 69, 0.85);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            z-index: 2147483646;
-            font-size: 0.8rem;
-            font-weight: bold;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-            transition: background 0.2s;
-        }
-
-        .btn-fullscreen:hover { 
-            background: var(--primary-red); 
-        }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; margin-top: 20px; }
+        .btn-red { background: var(--primary-red); color: white; border: none; padding: 8px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        textarea { width: 100%; height: 80px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <nav class="navbar">
-        <span class="brand-logo" onclick="location.href='student_dashboard.html'">
-            <span class="prime">PRIME</span> ACADEMY
-        </span>
+        <span class="brand-logo" onclick="location.href='student_dashboard.html'"><span class="prime">PRIME</span> ACADEMY</span>
         <button class="btn-red" onclick="location.href='student_dashboard.html'">← رجوع للمواد</button>
     </nav>
 
-    <div class="container">
-        <h2 id="lectureTitle" style="margin-top:0; margin-bottom:5px;">جاري التحميل...</h2>
-        <p id="lectureChapter" style="color: var(--primary-red); font-weight: bold; margin-top:0; margin-bottom:15px;"></p>
+    <div class="main-layout">
+        <div>
+            <h2 id="lectureTitle" style="margin-top:0;">جاري التحميل...</h2>
+            <div class="video-box" id="playerBox">
+                <div class="watermark" id="wmText">PRIME ACADEMY</div>
+                <button class="btn-fullscreen" onclick="toggleCustomFullScreen()">⛶ ملء الشاشة</button>
+                <div id="mediaContainer" style="width: 100%; height: 100%;"></div>
+            </div>
 
-        <div class="video-box" id="playerBox">
-            <div class="watermark" id="wmText">PRIME ACADEMY</div>
-            <!-- زر ملء الشاشة الخارجي الوحيد والمخصص لـ PRIME ACADEMY -->
-            <button class="btn-fullscreen" onclick="toggleCustomFullScreen()">⛶ ملء الشاشة</button>
-            <div id="mediaContainer" style="width: 100%; height: 100%;"></div>
+            <div class="card" id="detailsCard">
+                <h4 style="margin-top:0;">📄 تفاصيل الدرس والمرفقات</h4>
+                <p id="lecDescText">اختر محاضرة للبدء.</p>
+                <a id="lecPdfLink" href="#" target="_blank" class="btn-red" style="display:none; text-decoration:none;">📥 تحميل المرفقات</a>
+            </div>
+
+            <div class="card">
+                <h4 style="margin-top:0;">📝 دفتر الملاحظات</h4>
+                <textarea id="myNotes" placeholder="اكتب ملاحظاتك..."></textarea>
+            </div>
         </div>
 
-        <div class="card" id="detailsCard" style="display: none;">
-            <h4 style="margin-top: 0;">📄 تفاصيل الدرس والمرفقات</h4>
-            <p id="lecDescText" style="line-height: 1.6;"></p>
-            <a id="lecPdfLink" href="#" target="_blank" class="btn-red" style="display: inline-block; text-decoration: none; margin-top: 10px;">📥 تحميل ملزمة / مرفقات الدرس</a>
-        </div>
-
-        <div class="card">
-            <h4 style="margin-top:0;">📝 دفتر الملاحظات الخاص بك</h4>
-            <textarea id="myNotes" placeholder="اكتب ملاحظاتك وتنسحفظ تلقائياً..."></textarea>
-        </div>
-
-        <div class="card">
-            <h4 style="margin-top:0;">🧠 كويز المحاضرة</h4>
-            <p>س: اختر الإجابة الصحيحة للعملية المشروحة؟</p>
-            <label><input type="radio" name="q" value="A"> الاختيار الأول</label><br>
-            <label><input type="radio" name="q" value="B"> الاختيار الثاني</label><br><br>
-            <button class="btn-red" onclick="alert('تم إرسال الإجابة!')">إرسال الإجابة</button>
+        <!-- القائمة الجانبية المنسقة بحسب الفصول والحلقات -->
+        <div class="sidebar">
+            <h3 style="margin-top:0; border-bottom:1px solid var(--border-color); padding-bottom:10px;">📋 الفصول والحلقات</h3>
+            <div id="chaptersContainer">جاري تحميل الفصول...</div>
         </div>
     </div>
 
@@ -211,77 +93,92 @@
         wm.innerText = name + " | " + user;
 
         setInterval(() => {
-            const top = Math.floor(Math.random() * 70) + 15;
-            const left = Math.floor(Math.random() * 60) + 15;
-            wm.style.top = top + "%";
-            wm.style.left = left + "%";
+            wm.style.top = (Math.floor(Math.random() * 70) + 15) + "%";
+            wm.style.left = (Math.floor(Math.random() * 60) + 15) + "%";
         }, 3500);
 
-        async function loadLecture() {
+        let allLectures = [];
+
+        async function loadSubjectLectures() {
             try {
                 const q = query(collection(db, "lectures"), where("subject", "==", subject));
                 const snap = await getDocs(q);
 
+                const chaptersContainer = document.getElementById('chaptersContainer');
+                chaptersContainer.innerHTML = '';
+
                 if (!snap.empty) {
-                    const data = snap.docs[0].data();
-                    document.getElementById('lectureTitle').innerText = subject + " - " + data.title;
-                    document.getElementById('lectureChapter').innerText = data.chapter || "الفصل الأول";
+                    const chaptersMap = {};
 
-                    if (data.desc || data.pdfUrl) {
-                        document.getElementById('detailsCard').style.display = "block";
-                        document.getElementById('lecDescText').innerText = data.desc || "لا يوجد وصف لهذه المحاضرة.";
-                        const pdfBtn = document.getElementById('lecPdfLink');
-                        if (data.pdfUrl) {
-                            pdfBtn.href = data.pdfUrl;
-                            pdfBtn.style.display = "inline-block";
-                        } else {
-                            pdfBtn.style.display = "none";
-                        }
+                    snap.forEach(docSnap => {
+                        const data = docSnap.data();
+                        const ch = data.chapter || "الفصل الأول";
+                        if (!chaptersMap[ch]) { chaptersMap[ch] = []; }
+                        chaptersMap[ch].push(data);
+                    });
+
+                    // تجميع وعرض الفصول والحلقات
+                    for (const ch in chaptersMap) {
+                        const chDiv = document.createElement('div');
+                        chDiv.className = 'chapter-title';
+                        chDiv.innerText = ch;
+                        chaptersContainer.appendChild(chDiv);
+
+                        chaptersMap[ch].forEach(lec => {
+                            const lecDiv = document.createElement('div');
+                            lecDiv.className = 'lecture-item';
+                            lecDiv.innerText = "▶ " + lec.title;
+                            lecDiv.onclick = () => playLecture(lec, lecDiv);
+                            chaptersContainer.appendChild(lecDiv);
+                        });
                     }
 
-                    const url = data.videoUrl;
-                    const mediaBox = document.getElementById('mediaContainer');
-
-                    // حظر خاصية allowfullscreen تماماً على الإطار لإلغاء أي أزرار ملء شاشة داخل المشغل
-                    if (url.includes('iframe') || url.includes('bunny') || url.includes('embed') || url.includes('vdocipher')) {
-                        mediaBox.innerHTML = `<iframe src="${url}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture;" style="width:100%; height:100%; border:0;"></iframe>`;
-                    } else {
-                        mediaBox.innerHTML = `<video id="player" controls controlsList="nofullscreen nodownload"><source src="${url}" type="video/mp4"></video>`;
-                    }
+                    // تشغيل أول محاضرة تلقائياً
+                    const firstLecture = snap.docs[0].data();
+                    playLecture(firstLecture, chaptersContainer.querySelector('.lecture-item'));
 
                 } else {
-                    document.getElementById('lectureTitle').innerText = subject + " - المحاضرة الأولى";
+                    document.getElementById('lectureTitle').innerText = subject + " - لا توجد محاضرات حالياً";
+                    chaptersContainer.innerHTML = 'لا توجد محاضرات مضافة لهذا الفصل.';
                 }
             } catch (e) { console.error(e); }
         }
 
-        loadLecture();
+        function playLecture(lec, element) {
+            document.querySelectorAll('.lecture-item').forEach(el => el.classList.remove('active'));
+            if(element) element.classList.add('active');
 
-        document.addEventListener('keydown', (e) => {
-            if (e.keyCode === 123 || 
-               (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
-               (e.ctrlKey && e.keyCode === 85)) {
-                e.preventDefault();
-                return false;
+            document.getElementById('lectureTitle').innerText = subject + " - " + lec.title;
+            document.getElementById('lecDescText').innerText = lec.desc || "لا يوجد وصف لهذه المحاضرة.";
+
+            const pdfBtn = document.getElementById('lecPdfLink');
+            if (lec.pdfUrl) {
+                pdfBtn.href = lec.pdfUrl;
+                pdfBtn.style.display = "inline-block";
+            } else {
+                pdfBtn.style.display = "none";
             }
-        });
 
-        // دالة تكبير شاشة المشغل بالكامل بما فيها العلامة المائية
+            const mediaBox = document.getElementById('mediaContainer');
+            const url = lec.videoUrl;
+
+            if (url.includes('iframe') || url.includes('bunny') || url.includes('embed') || url.includes('vdocipher')) {
+                mediaBox.innerHTML = `<iframe src="${url}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture;" style="width:100%; height:100%; border:0;"></iframe>`;
+            } else {
+                mediaBox.innerHTML = `<video controls controlsList="nofullscreen nodownload"><source src="${url}" type="video/mp4"></video>`;
+            }
+        }
+
         window.toggleCustomFullScreen = function() {
             const box = document.getElementById('playerBox');
             if (!document.fullscreenElement) {
                 if (box.requestFullscreen) { box.requestFullscreen(); }
-                else if (box.webkitRequestFullscreen) { box.webkitRequestFullscreen(); }
             } else {
                 if (document.exitFullscreen) { document.exitFullscreen(); }
             }
         };
 
-        const notes = document.getElementById('myNotes');
-        notes.value = localStorage.getItem('notes_' + subject) || '';
-        notes.addEventListener('input', () => {
-            localStorage.setItem('notes_' + subject, notes.value);
-        });
+        loadSubjectLectures();
     </script>
 </body>
 </html>
