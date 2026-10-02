@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة الأستاذ - PRIME ACADEMY</title>
+    <style>
+        :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #1a1a1a; --primary-red: #dc3545; --border-color: #e9ecef; }
+        [data-theme="dark"] { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #f1f1f1; --border-color: #2d2d2d; }
+        
+        * { box-sizing: border-box; }
+        body { background: var(--bg-color); color: var(--text-color); font-family: system-ui, sans-serif; margin: 0; direction: rtl; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--card-bg); border-bottom: 1px solid var(--border-color); }
+        .brand-logo { font-size: 1.5rem; font-weight: 800; }
+        .brand-logo .prime { color: var(--primary-red); }
+
+        .container { max-width: 1000px; margin: 30px auto; padding: 0 15px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); }
+
+        .btn-red { background: var(--primary-red); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-edit { background: #0d6efd; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-delete { background: #ff4d4d; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-toggle { background: #ffc107; color: #000; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid var(--border-color); padding: 10px; text-align: right; }
+        th { background: var(--bg-color); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <span class="brand-logo"><span class="prime">PRIME</span> ACADEMY - لوحة التدريسي</span>
+        <div>
+            <span id="teacherSubName" style="font-weight: bold; margin-left: 15px; color: var(--primary-red);"></span>
+            <button class="btn-red" onclick="logout()">تسجيل خروج</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <div class="card">
+            <h3 id="formTitle">🎬 إضافة محاضرة جديدة</h3>
+            <input type="hidden" id="editLecId">
+            <div class="form-group">
+                <label>اسم الفصل:</label>
+                <input type="text" id="lecChapter">
+            </div>
+            <div class="form-group">
+                <label>عنوان المحاضرة:</label>
+                <input type="text" id="lecTitle">
+            </div>
+            <div class="form-group">
+                <label>رابط الفيديو المشفر (Embed Link):</label>
+                <input type="text" id="lecUrl">
+            </div>
+            <div class="form-group">
+                <label>وصف المحاضرة:</label>
+                <textarea id="lecDesc"></textarea>
+            </div>
+            <div class="form-group">
+                <label>رابط الملزمة / PDF المرفق:</label>
+                <input type="text" id="lecPdf">
+            </div>
+            <button class="btn-red" onclick="saveLecture()">حفظ المحاضرة</button>
+            <button class="btn-toggle" id="cancelEdit" style="display:none;" onclick="resetForm()">إلغاء التعديل</button>
+        </div>
+
+        <div class="card">
+            <h3>📋 المحاضرات الخاصة بمادتك</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>الفصل</th>
+                        <th>عنوان المحاضرة</th>
+                        <th>إجراء</th>
+                    </tr>
+                </thead>
+                <tbody id="myLecturesTable"></tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBApoSZ-HXy9kd07tSJfuRdWkJcrbQVYf0",
+            authDomain: "qmove1.firebaseapp.com",
+            projectId: "qmove1",
+            storageBucket: "qmove1.firebasestorage.app",
+            messagingSenderId: "166464805371",
+            appId: "1:166464805371:web:d65b0cb8b141e4b894935e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const currentTeacherSubject = localStorage.getItem('prime_teacher_subject');
+        if (!currentTeacherSubject) {
+            location.href = 'index.html';
+        }
+
+        document.getElementById('teacherSubName').innerText = "المادة: " + currentTeacherSubject;
+
+        window.saveLecture = async function() {
+            const id = document.getElementById('editLecId').value;
+            const ch = document.getElementById('lecChapter').value.trim() || "الفصل الأول";
+            const title = document.getElementById('lecTitle').value.trim();
+            const url = document.getElementById('lecUrl').value.trim();
+            const desc = document.getElementById('lecDesc').value.trim();
+            const pdf = document.getElementById('lecPdf').value.trim();
+
+            if (!title || !url) return alert('يرجى ملء العنوان والرابط!');
+
+            try {
+                const lecId = id || Date.now().toString();
+                await setDoc(doc(db, "lectures", lecId), {
+                    subject: currentTeacherSubject,
+                    chapter: ch,
+                    title: title,
+                    videoUrl: url,
+                    desc: desc,
+                    pdfUrl: pdf
+                }, { merge: true });
+
+                alert('تم حفظ المحاضرة بنجاح!');
+                resetForm();
+                loadMyLectures();
+            } catch (e) { alert('خطأ: ' + e.message); }
+        };
+
+        async function loadMyLectures() {
+            const table = document.getElementById('myLecturesTable');
+            table.innerHTML = '';
+            
+            const q = query(collection(db, "lectures"), where("subject", "==", currentTeacherSubject));
+            const snap = await getDocs(q);
+
+            snap.forEach(d => {
+                const data = d.data();
+                table.innerHTML += `
+                    <tr>
+                        <td><b>${data.chapter}</b></td>
+                        <td>${data.title}</td>
+                        <td>
+                            <button class="btn-edit" onclick="editLecture('${d.id}')">تعديل</button>
+                            <button class="btn-delete" onclick="deleteLecture('${d.id}')">حذف</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        window.editLecture = async function(id) {
+            const snap = await getDoc(doc(db, "lectures", id));
+            if (snap.exists()) {
+                const d = snap.data();
+                document.getElementById('editLecId').value = id;
+                document.getElementById('lecChapter').value = d.chapter;
+                document.getElementById('lecTitle').value = d.title;
+                document.getElementById('lecUrl').value = d.videoUrl;
+                document.getElementById('lecDesc').value = d.desc || '';
+                document.getElementById('lecPdf').value = d.pdfUrl || '';
+                document.getElementById('formTitle').innerText = "✏️ تعديل المحاضرة";
+                document.getElementById('cancelEdit').style.display = "inline-block";
+            }
+        };
+
+        window.resetForm = function() {
+            document.getElementById('editLecId').value = '';
+            document.getElementById('lecChapter').value = '';
+            document.getElementById('lecTitle').value = '';
+            document.getElementById('lecUrl').value = '';
+            document.getElementById('lecDesc').value = '';
+            document.getElementById('lecPdf').value = '';
+            document.getElementById('formTitle').innerText = "🎬 إضافة محاضرة جديدة";
+            document.getElementById('cancelEdit').style.display = "none";
+        };
+
+        window.deleteLecture = async function(id) {
+            if (confirm('هل تأكدت من حذف المحاضرة؟')) {
+                await deleteDoc(doc(db, "lectures", id));
+                loadMyLectures();
+            }
+        };
+
+        window.logout = function() {
+            localStorage.clear();
+            location.href = 'index.html';
+        };
+
+        loadMyLectures();
+    </script>
+</body>
+</html>
