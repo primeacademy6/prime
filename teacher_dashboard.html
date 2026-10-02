@@ -30,6 +30,7 @@
         .btn-edit { background: #0d6efd; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
         .btn-delete { background: #ff4d4d; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
         .btn-toggle { background: #ffc107; color: #000; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-reset { background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid var(--border-color); padding: 10px; text-align: right; }
@@ -146,10 +147,9 @@
             </div>
         </div>
 
-        <!-- 3. تبويب إضافة الطلاب والبحث والتفعيل -->
+        <!-- 3. تبويب إضافة الطلاب والبحث والتفعيل والنشاط -->
         <div id="studentsTab" class="tab-content" style="display: none;">
             
-            <!-- واجهة إضافة طالب جديد كاملة بالميزات المطلوبة -->
             <div class="card">
                 <h3>👤 إضافة طالب جديد بالنظام</h3>
                 <div class="form-group">
@@ -179,9 +179,8 @@
                 <button class="btn-red" onclick="addNewStudent()">إنشاء حساب الطالب</button>
             </div>
 
-            <!-- واجهة البحث والتحكم الشامل -->
             <div class="card">
-                <h3>🔍 البحث عن طالب وتفعيل المواد</h3>
+                <h3>🔍 البحث عن طالب وتفعيل المواد وسجل النشاط</h3>
                 <div class="form-group">
                     <label>بحث باسم الطالب أو اليوزر:</label>
                     <input type="text" id="studentSearch" oninput="filterStudents()" placeholder="اكتب للبحث السريع...">
@@ -192,7 +191,7 @@
                 </div>
 
                 <div id="studentDetailBox" class="student-info-box" style="display: none;">
-                    <h4>📄 كافة معلومات الطالب الحالية:</h4>
+                    <h4>📄 كافة معلومات الطالب وسجل النشاط:</h4>
                     <div class="info-grid">
                         <div class="info-item"><b>الاسم الكامل:</b> <span id="stName"></span></div>
                         <div class="info-item"><b>اسم المستخدم (User):</b> <span id="stUser"></span></div>
@@ -200,10 +199,13 @@
                         <div class="info-item"><b>رقم الطالب:</b> <span id="stPhone"></span></div>
                         <div class="info-item"><b>رقم ولي الأمر:</b> <span id="stParentPhone"></span></div>
                         <div class="info-item"><b>حالة الحساب:</b> <span id="stStatus"></span></div>
+                        <div class="info-item"><b>آخر دخول:</b> <span id="stLastTime" style="color:#0d6efd;"></span></div>
+                        <div class="info-item"><b>جهاز الطالب:</b> <span id="stLastDev"></span></div>
                     </div>
 
                     <div style="margin-bottom: 15px;">
                         <button class="btn-toggle" id="btnToggleStatus" onclick="toggleStudentAccount()">تغيير حالة الحساب</button>
+                        <button class="btn-reset" onclick="resetStudentDevice()">إعادة ضبط قفل الجهاز 🔄</button>
                         <button class="btn-delete" onclick="deleteStudentAccount()">حذف الحساب نهائياً</button>
                     </div>
 
@@ -215,7 +217,7 @@
             </div>
         </div>
 
-        <!-- 4. تبويب إنشاء حسابات المدرسين -->
+        <!-- 4. تبويب المدرسين -->
         <div id="teachersTab" class="tab-content" style="display: none;">
             <div class="card">
                 <h3>👨‍🏫 إنشاء حساب أستاذ (لوحة خاصة للمادة)</h3>
@@ -254,7 +256,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getDoc, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBApoSZ-HXy9kd07tSJfuRdWkJcrbQVYf0",
@@ -316,7 +318,7 @@
             const lecSelect = document.getElementById('lectureSubSelect');
             const teachSelect = document.getElementById('teacherSubSelect');
             const newStBoxes = document.getElementById('newStudentSubjectsBoxes');
-            
+
             table.innerHTML = '';
             lecSelect.innerHTML = '';
             if(teachSelect) teachSelect.innerHTML = '';
@@ -379,7 +381,7 @@
             }
         };
 
-        // --- إضافة طالب جديد بالنظام ---
+        // --- إضافة طالب جديد ---
         window.addNewStudent = async function() {
             const name = document.getElementById('createStName').value.trim();
             const user = document.getElementById('createStUser').value.trim();
@@ -416,7 +418,7 @@
             } catch (e) { alert('خطأ: ' + e.message); }
         };
 
-        // --- إدارة وتعديل المحاضرات ---
+        // --- المحاضرات ---
         window.saveLecture = async function() {
             const id = document.getElementById('editLecId').value;
             const sub = document.getElementById('lectureSubSelect').value;
@@ -499,7 +501,7 @@
             }
         };
 
-        // --- البحث والتحكم الشامل بالطلاب ---
+        // --- البحث والتحكم الشامل بالطلاب وقفل الجهاز ---
         async function loadStudents() {
             allStudentsList = [];
             const snap = await getDocs(collection(db, "students"));
@@ -546,6 +548,9 @@
                 document.getElementById('stStatus').innerText = disabled ? '🔴 معطل' : '🟢 نشط';
                 document.getElementById('btnToggleStatus').innerText = disabled ? 'تنشيط الحساب' : 'تعطيل الحساب';
 
+                document.getElementById('stLastTime').innerText = d.lastLoginTime || 'لم يسجل دخول بعد';
+                document.getElementById('stLastDev').innerText = d.lastDeviceInfo || 'غير محدد';
+
                 const allowed = d.allowedSubjects || [];
                 const container = document.getElementById('studentSubjectsBoxes');
                 container.innerHTML = '';
@@ -574,11 +579,23 @@
             }
         };
 
+        // إعادة ضبط قفل الجهاز ليتمكن الطالب من الدخول من جهاز جديد
+        window.resetStudentDevice = async function() {
+            const studentId = document.getElementById('studentSelect').value;
+            if (confirm(`فك قفل الجهاز لحساب الطالب @${studentId}؟ سيتمكن من تسجيل الدخول من جهاز جديد.`)) {
+                await updateDoc(doc(db, "students", studentId), {
+                    boundDeviceId: deleteField()
+                });
+                alert('تم فك ربط الجهاز بنجاح!');
+                loadStudentDetails();
+            }
+        };
+
         window.deleteStudentAccount = async function() {
             const studentId = document.getElementById('studentSelect').value;
-            if (confirm(`هل أنت متأكد من حذف حساب الطالب @${studentId} نهائياً؟`)) {
+            if (confirm(`حذف حساب الطالب @${studentId} نهائياً؟`)) {
                 await deleteDoc(doc(db, "students", studentId));
-                alert('تم حذف الحساب نهائياً.');
+                alert('تم حذف الحساب.');
                 document.getElementById('studentDetailBox').style.display = "none";
                 loadStudents();
             }
@@ -597,7 +614,7 @@
             } catch (e) { alert('خطأ: ' + e.message); }
         };
 
-        // --- إدارة حسابات المدرسين ---
+        // --- المدرسين ---
         window.createTeacherAccount = async function() {
             const sub = document.getElementById('teacherSubSelect').value;
             const user = document.getElementById('teacherUser').value.trim();
