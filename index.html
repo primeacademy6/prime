@@ -10,7 +10,7 @@
     <meta name="theme-color" content="#dc3545">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://via.placeholder.com/192x192/dc3545/ffffff?text=PRIME">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3429/3429149.png">
 
     <style>
         :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #1a1a1a; --primary-red: #dc3545; --border-color: #e9ecef; }
@@ -39,10 +39,10 @@
         .error-msg { color: var(--primary-red); font-weight: bold; font-size: 0.85rem; margin-top: 12px; display: none; }
         .success-msg { color: #198754; font-weight: bold; font-size: 0.85rem; margin-top: 12px; display: none; }
 
-        /* نافذة إرشادات التثبيت المحدثة لكل الأجهزة */
+        /* نافذة إرشادات التثبيت المخصصة الذكية */
         .install-modal { display: none; background: rgba(0,0,0,0.65); position: fixed; top:0; left:0; width:100vw; height:100vh; z-index: 99999; justify-content: center; align-items: center; padding: 20px; }
         .install-box { background: var(--card-bg); padding: 25px; border-radius: 16px; max-width: 380px; text-align: right; box-shadow: 0 10px 30px rgba(0,0,0,0.3); direction: rtl; }
-        .step-item { background: var(--bg-color); padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; font-size: 0.88rem; border-right: 3px solid var(--primary-red); }
+        .step-item { background: var(--bg-color); padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; font-size: 0.88rem; border-right: 3px solid var(--primary-red); line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -55,7 +55,7 @@
         <p class="sub-title">أهلاً بك في منصة PRIME ACADEMY التعليمية.<br>اختر طريقة الاستخدام المفضلة لديك:</p>
 
         <button class="btn-main" onclick="handleInstallClick()">
-            📲 تثبيت التطبيق على الجهاز
+            📲 تثبيت التطبيق / إنشاء اختصار
         </button>
         
         <button class="btn-outline" onclick="showLoginScreen()">
@@ -87,16 +87,13 @@
         <p id="successMsg" class="success-msg"></p>
     </div>
 
-    <!-- نافذة إرشادات التثبيت المحدثة والدقيقة للآيفون والأندرويد -->
+    <!-- نافذة الإرشادات الذكية التكيفية حسب نظام جهاز الطالب -->
     <div class="install-modal" id="installModal">
         <div class="install-box">
-            <h3 style="margin-top:0; color:var(--primary-red); text-align:center;">📲 طريقة تثبيت التطبيق</h3>
-            <p style="font-size:0.9rem; color:#666; margin-bottom:15px; text-align:center;">اتبع الخطوات البسيطة التالية لإضافة المنصة كتطبيق على شاشة هاتفك الرئيسية:</p>
+            <h3 id="modalTitle" style="margin-top:0; color:var(--primary-red); text-align:center;">📲 طريقة تثبيت التطبيق</h3>
+            <p id="modalSub" style="font-size:0.9rem; color:#666; margin-bottom:15px; text-align:center;">اتبع الخطوات التالية لإضافة المنصة على شاشتك الرئيسية:</p>
 
-            <div class="step-item"><b>1.</b> الضغط على خيارات المتصفح أو زر الثلاث نقاط <b>⋮</b> أو المشاركة <b>⎋</b>.</div>
-            <div class="step-item"><b>2.</b> اختر <b>مشاركة</b> ثم اضغط على <b>عرض المزيد</b> (في حال عدم ظهور الخيار مباشرة).</div>
-            <div class="step-item"><b>3.</b> اختر <b>إضافة إلى الشاشة الرئيسية</b> (Add to Home Screen).</div>
-            <div class="step-item"><b>4.</b> اضغط على كلمة <b>إضافة</b> في الأعلى ليظهر تطبيق المنصة فوراً على شاشتك!</div>
+            <div id="stepsContainer"></div>
 
             <button class="btn-main" style="margin-top:20px; padding:12px;" onclick="closeInstallModal()">فهمت ذلك، استمرار لصفحة الدخول</button>
         </div>
@@ -128,7 +125,7 @@
             deferredPrompt = e;
         });
 
-        // تشغيل التثبيت التلقائي أو إظهار نافذة التعليمات الدقيقة
+        // دالة الفحص والتعرف الذكي على نوع جهاز الطالب عند الضغط
         window.handleInstallClick = function() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
@@ -138,10 +135,34 @@
                     }
                     deferredPrompt = null;
                 });
-            } else {
-                // إظهار النافذة التعليمية بدلاً من رسالة التنبيه المزعجة
-                document.getElementById('installModal').style.display = 'flex';
+                return;
             }
+
+            const ua = navigator.userAgent;
+            const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const container = document.getElementById('stepsContainer');
+
+            if (isIOS) {
+                // خطوات الآيفون والـ iOS التامّة
+                document.getElementById('modalTitle').innerText = "📲 تثبيت التطبيق على iPhone";
+                container.innerHTML = `
+                    <div class="step-item"><b>1.</b> اضغط على زر <b>المشاركة (Share ⎋)</b> أو الثلاث نقاط أعلى/أسفل المتصفح.</div>
+                    <div class="step-item"><b>2.</b> اضغط على <b>مشاركة</b> ثم اختر <b>عرض المزيد</b> (إذا لم يظهر الخيار مباشرة).</div>
+                    <div class="step-item"><b>3.</b> اختر <b>إضافة إلى الشاشة الرئيسية</b> (Add to Home Screen).</div>
+                    <div class="step-item"><b>4.</b> اضغط على كلمة <b>إضافة</b> بالأعلى ليظهر تطبيق PRIME ACADEMY فوراً على شاشتك!</div>
+                `;
+            } else {
+                // خطوات الأندرويد والكروم المحدثة والمصححة 100%
+                document.getElementById('modalTitle').innerText = "📲 تثبيت التطبيق / الاختصار على Android";
+                container.innerHTML = `
+                    <div class="step-item"><b>1.</b> اضغط على قائمة المتصفح (الثلاث نقاط <b>⋮</b>) بأعلى اليسار/اليمين.</div>
+                    <div class="step-item"><b>2.</b> اضغط على خيار <b>تثبيت التطبيق</b> أو <b>إضافة إلى الشاشة الرئيسية</b>.</div>
+                    <div class="step-item"><b>3.</b> إذا ظهر لك خيار <b>إنشاء اختصار</b>، اضغط عليه ثم اختار <b>إضافة تلقائياً</b>.</div>
+                    <div class="step-item"><b>4.</b> سيظهر التطبيق فوراً كأيقونة مستقلة وبدون شريط عنوان على شاشة هاتفك!</div>
+                `;
+            }
+
+            document.getElementById('installModal').style.display = 'flex';
         };
 
         window.closeInstallModal = function() {
