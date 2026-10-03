@@ -55,7 +55,7 @@
         <span class="brand-logo"><span class="prime">PRIME</span> ACADEMY</span>
         <div>
             <span id="studentWelcome" style="margin-left: 15px; font-weight: bold;"></span>
-            <button class="btn-logout" id="logoutBtn" onclick="logout()">تسجيل خروج</button>
+            <button class="btn-logout" onclick="logout()">تسجيل خروج</button>
         </div>
     </nav>
 
@@ -68,7 +68,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, getDocs, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBApoSZ-HXy9kd07tSJfuRdWkJcrbQVYf0",
@@ -141,21 +141,11 @@
             location.href = 'watch_lecture.html';
         };
 
-        // دالة تسجيل الخروج الذكية تفرغ الجلسة من السيرفر فوراً
-        window.logout = async function() {
-            const btn = document.getElementById('logoutBtn');
-            btn.innerText = "جاري الخروج...";
-            btn.disabled = true;
-
-            try {
-                if (currentStudentUser) {
-                    await updateDoc(doc(db, "students", currentStudentUser), {
-                        boundDeviceId: deleteField()
-                    });
-                }
-            } catch(e) { console.error(e); }
-
-            localStorage.clear();
+        // تسجيل الخروج الآمن (يمسح بيانات الجلسة فقط ويترك معرف الجهاز)
+        window.logout = function() {
+            localStorage.removeItem('prime_student_user');
+            localStorage.removeItem('prime_student_name');
+            localStorage.removeItem('prime_selected_subject');
             location.href = 'index.html';
         };
 
