@@ -36,7 +36,7 @@
         th, td { border: 1px solid var(--border-color); padding: 8px 12px; text-align: right; }
         th { background: var(--bg-color); }
 
-        /* الأكورديون الخاص بالفصول */
+        /* الأكورديون الشجري للفصول */
         .chapter-accordion { border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
         .chapter-header { background: var(--bg-color); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; border-right: 5px solid var(--primary-red); }
         .chapter-body { padding: 15px; background: var(--card-bg); display: none; }
@@ -103,11 +103,11 @@
             </div>
         </div>
 
-        <!-- 2. تبويب الفصول والحلقات المنظم بالكامل -->
+        <!-- 2. تبويب الفصول والحلقات -->
         <div id="chaptersTab" class="tab-content" style="display: none;">
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <!-- 1. إنشاء فصل جديد -->
+                <!-- إنشاء فصل جديد -->
                 <div class="card">
                     <h3>📂 إنشاء فصل جديد للمادة</h3>
                     <div class="form-group">
@@ -116,12 +116,12 @@
                     </div>
                     <div class="form-group">
                         <label>اسم الفصل الجديد:</label>
-                        <input type="text" id="newChapterName" placeholder="مثال: الفصل الأول - الأعداد المركبة">
+                        <input type="text" id="newChapterName">
                     </div>
                     <button class="btn-red" onclick="createChapter()">حفظ الفصل الجديد</button>
                 </div>
 
-                <!-- 2. إضافة حلقة جديدة بداخل فصل معين -->
+                <!-- إضافة حلقة جديدة بداخل فصل -->
                 <div class="card">
                     <h3 id="lecFormTitle">🎬 إضافة حلقة جديدة بداخل فصل</h3>
                     <input type="hidden" id="editLecId">
@@ -150,15 +150,15 @@
                 </div>
             </div>
 
-            <!-- عرض الفصول والتسلسل الشجري للحلقات -->
             <div class="card">
                 <h3>📋 شجرة الفصول والحلقات المرفوعة للمادة</h3>
                 <div id="chaptersTreeContainer">اختر مادة لعرض فصولها وحلقاتها...</div>
             </div>
         </div>
 
-        <!-- 3. تبويب الطلاب -->
+        <!-- 3. تبويب الطلاب والإضافة والتحكم -->
         <div id="studentsTab" class="tab-content" style="display: none;">
+            
             <div class="card">
                 <h3>👤 إضافة طالب جديد بالنظام</h3>
                 <div class="form-group">
@@ -288,7 +288,7 @@
             event.target.classList.add('active');
         };
 
-        // --- إدارة المواد ---
+        // --- إدارة المواد والأغلفة ---
         window.saveSubject = async function() {
             const id = document.getElementById('editSubId').value;
             const name = document.getElementById('newSubName').value.trim();
@@ -391,7 +391,7 @@
             }
         };
 
-        // --- نظام الفصول الشجري المتقدم ---
+        // --- إدارة الفصول والحلقات (الأكورديون الشجري) ---
         window.createChapter = async function() {
             const sub = document.getElementById('chapterSubSelect').value;
             const name = document.getElementById('newChapterName').value.trim();
@@ -421,7 +421,6 @@
 
             if (!sub) return;
 
-            // 1. جلب الفصول الخاصة بالمادة
             const qCh = query(collection(db, "chapters"), where("subject", "==", sub));
             const chSnap = await getDocs(qCh);
 
@@ -432,7 +431,6 @@
 
             treeBox.innerHTML = '';
 
-            // 2. جلب الحلقات
             const qLec = query(collection(db, "lectures"), where("subject", "==", sub));
             const lecSnap = await getDocs(qLec);
             const lecturesMap = {};
@@ -444,7 +442,6 @@
                 lecturesMap[chName].push({ id: d.id, ...data });
             });
 
-            // 3. بناء الشجرة والأكورديون
             chSnap.forEach(chDoc => {
                 const chData = chDoc.data();
                 const chName = chData.name;
@@ -520,7 +517,7 @@
             }
         };
 
-        // --- الحلقات ---
+        // --- إدارة الحلقات ---
         window.saveLecture = async function() {
             const id = document.getElementById('editLecId').value;
             const sub = document.getElementById('chapterSubSelect').value;
@@ -560,7 +557,7 @@
                 document.getElementById('lecUrl').value = d.videoUrl;
                 document.getElementById('lecDesc').value = d.desc || '';
                 document.getElementById('lecPdf').value = d.pdfUrl || '';
-                document.getElementById('lecFormTitle').innerText = "✏️ تعديل الحلقة";
+                document.getElementById('lecFormTitle').innerText = "✏️️ تعديل الحلقة";
                 document.getElementById('cancelLecEdit').style.display = "inline-block";
             }
         };
@@ -582,7 +579,7 @@
             }
         };
 
-        // --- الطلاب ---
+        // --- إدارة وإضافة الطلاب ---
         window.addNewStudent = async function() {
             const name = document.getElementById('createStName').value.trim();
             const user = document.getElementById('createStUser').value.trim();
@@ -696,11 +693,15 @@
             }
         };
 
+        // دالة إعادة ضبط قفل الجهاز الخاصة بالطالب
         window.resetStudentDevice = async function() {
             const studentId = document.getElementById('studentSelect').value;
-            if (confirm(`فك قفل الجهاز لحساب الطالب @${studentId}؟`)) {
-                await updateDoc(doc(db, "students", studentId), { boundDeviceId: deleteField() });
-                alert('تم فك ربط الجهاز بنجاح!');
+            if (confirm(`فك قفل الجهاز لحساب الطالب @${studentId}؟ سيتمكن من ربط حسابه بجهاز جديد.`)) {
+                await updateDoc(doc(db, "students", studentId), {
+                    deviceId: deleteField(),
+                    boundDeviceId: deleteField()
+                });
+                alert('تم فك ربط الجهاز بنجاح! يمكن للطالب الآن تسجيل الدخول من جهازه الجديد.');
                 loadStudentDetails();
             }
         };
@@ -726,7 +727,7 @@
             } catch (e) { alert('خطأ: ' + e.message); }
         };
 
-        // --- المدرسين ---
+        // --- إدارة حسابات المدرسين ---
         window.createTeacherAccount = async function() {
             const sub = document.getElementById('teacherSubSelect').value;
             const user = document.getElementById('teacherUser').value.trim();
