@@ -14,14 +14,40 @@
         .brand-logo { font-size: 1.3rem; font-weight: 800; cursor: pointer; }
         .brand-logo .prime { color: var(--primary-red); }
 
-        /* التنسيق للكمبيوتر والموبايل */
         .main-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; max-width: 1280px; margin: 20px auto; padding: 0 15px; }
 
-        .video-box { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; }
+        .video-box { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; transition: all 0.3s ease; }
         .video-box iframe, .video-box video { width: 100%; height: 100%; border: none; }
 
+        /* وضع ملء الشاشة البديل للآيفون والـ iOS */
+        .video-box.ios-fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999999 !important;
+            border-radius: 0 !important;
+            aspect-ratio: auto !important;
+        }
+
         .watermark { position: absolute; color: rgba(255, 255, 255, 0.4); font-size: 0.9rem; font-weight: bold; pointer-events: none; z-index: 2147483647 !important; padding: 4px 10px; background: rgba(0,0,0,0.35); border-radius: 6px; transition: top 2.5s ease, left 2.5s ease; font-family: monospace; direction: ltr; }
-        .btn-fullscreen { background: rgba(220, 53, 69, 0.85); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; position: absolute; top: 12px; left: 12px; z-index: 2147483646; font-size: 0.8rem; font-weight: bold; }
+        
+        .btn-fullscreen { 
+            background: rgba(220, 53, 69, 0.9); 
+            color: white; 
+            border: none; 
+            padding: 8px 14px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            position: absolute; 
+            top: 12px; 
+            left: 12px; 
+            z-index: 2147483646; 
+            font-size: 0.85rem; 
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
 
         .sidebar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; max-height: 600px; overflow-y: auto; }
         
@@ -36,7 +62,6 @@
         .btn-red { background: var(--primary-red); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
         textarea { width: 100%; height: 80px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); }
 
-        /* تعديل الموبايل والشاشات الصغيره لترتيب عناصر الصفحة بشكل عمودي ومريح */
         @media (max-width: 768px) {
             .main-layout { display: flex; flex-direction: column; gap: 15px; margin: 10px auto; padding: 0 10px; }
             .sidebar { order: 2; max-height: none; }
@@ -53,12 +78,11 @@
     </nav>
 
     <div class="main-layout">
-        <!-- مشغل الفيديو والتفاصيل -->
         <div>
             <h2 id="lectureTitle" style="margin-top:0; margin-bottom:10px;">جاري التحميل...</h2>
             <div class="video-box" id="playerBox">
                 <div class="watermark" id="wmText">PRIME ACADEMY</div>
-                <button class="btn-fullscreen" onclick="toggleCustomFullScreen()">⛶ ملء الشاشة</button>
+                <button class="btn-fullscreen" id="fsBtn" onclick="toggleCustomFullScreen()">⛶ ملء الشاشة</button>
                 <div id="mediaContainer" style="width: 100%; height: 100%;"></div>
             </div>
 
@@ -74,7 +98,6 @@
             </div>
         </div>
 
-        <!-- قائمة الفصول والحلقات (تكون تحته بالموبايل وبجانبه باللابتوب) -->
         <div class="sidebar">
             <h3 style="margin-top:0; border-bottom:1px solid var(--border-color); padding-bottom:10px;">📋 الفصول والحلقات</h3>
             <div id="chaptersContainer">جاري تحميل منهج المادة...</div>
@@ -205,20 +228,48 @@
             const url = lec.videoUrl;
 
             if (url.includes('iframe') || url.includes('bunny') || url.includes('embed') || url.includes('vdocipher')) {
-                mediaBox.innerHTML = `<iframe src="${url}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture;" style="width:100%; height:100%; border:0;"></iframe>`;
+                mediaBox.innerHTML = `<iframe id="vIframe" src="${url}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen style="width:100%; height:100%; border:0;"></iframe>`;
             } else {
-                mediaBox.innerHTML = `<video controls controlsList="nofullscreen nodownload"><source src="${url}" type="video/mp4"></video>`;
+                mediaBox.innerHTML = `<video id="vIframe" controls controlsList="nofullscreen nodownload"><source src="${url}" type="video/mp4"></video>`;
             }
         }
 
+        // دالة ملء الشاشة الذكية المتوافقة 100% مع iPhone و Android واللابتوب
         window.toggleCustomFullScreen = function() {
             const box = document.getElementById('playerBox');
-            if (!document.fullscreenElement) {
-                if (box.requestFullscreen) { box.requestFullscreen(); }
+            const btn = document.getElementById('fsBtn');
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+            if (isIOS) {
+                // آيفون / iOS: استخدام وضع التوسيع الشامل (Pseudo Fullscreen)
+                if (!box.classList.contains('ios-fullscreen')) {
+                    box.classList.add('ios-fullscreen');
+                    btn.innerText = "✕ إنهاء ملء الشاشة";
+                } else {
+                    box.classList.remove('ios-fullscreen');
+                    btn.innerText = "⛶ ملء الشاشة";
+                }
             } else {
-                if (document.exitFullscreen) { document.exitFullscreen(); }
+                // أندرويد ولابتوب: استخدام القياسي
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                    if (box.requestFullscreen) { box.requestFullscreen(); }
+                    else if (box.webkitRequestFullscreen) { box.webkitRequestFullscreen(); }
+                    btn.innerText = "✕ إنهاء ملء الشاشة";
+                } else {
+                    if (document.exitFullscreen) { document.exitFullscreen(); }
+                    else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+                    btn.innerText = "⛶ ملء الشاشة";
+                }
             }
         };
+
+        // المراقبة الخروج من ملء الشاشة للأجهزة العادية
+        document.addEventListener('fullscreenchange', () => {
+            const btn = document.getElementById('fsBtn');
+            if (!document.fullscreenElement) {
+                btn.innerText = "⛶ ملء الشاشة";
+            }
+        });
 
         const notes = document.getElementById('myNotes');
         notes.value = localStorage.getItem('notes_' + subject) || '';
