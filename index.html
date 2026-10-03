@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تسجيل الدخول - PRIME ACADEMY</title>
     
-    <!-- ربط هوية التطبيق PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#dc3545">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -79,14 +78,10 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // تسجيل الـ Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(() => {
-                console.log('App Service Worker Registered');
-            });
+            navigator.serviceWorker.register('sw.js').catch(()=>{});
         }
 
-        // إظهار زر التثبيت تلقائياً عند الدعم
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -112,22 +107,13 @@
         const err = document.getElementById('errorMsg');
         const succ = document.getElementById('successMsg');
 
-        function getUniversalDeviceId() {
-            let devId = localStorage.getItem('prime_universal_device_id');
-            if (!devId) {
-                devId = 'DEV_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
-                localStorage.setItem('prime_universal_device_id', devId);
-            }
-            return devId;
-        }
-
         function getDeviceInfo() {
             const ua = navigator.userAgent;
             if (ua.includes("Win")) return "حاسوب Windows";
             if (ua.includes("Mac")) return "جهاز Mac";
             if (ua.includes("Android")) return "هاتف Android";
             if (ua.includes("iPhone") || ua.includes("iPad")) return "جهاز iOS / iPhone";
-            return "تطبيق هاتف";
+            return "هاتف / جهاز آخر";
         }
 
         [loginUser, loginPass].forEach(input => {
@@ -153,7 +139,7 @@
             try {
                 if (user === 'admin' && pass === '123456') {
                     localStorage.setItem('prime_admin', 'true');
-                    return showSuccessAndRedirect("تم تسجيل الدخول بنجاح! جاري التوجيه...", "teacher_dashboard.html");
+                    return showSuccessAndRedirect("تم تسجيل الدخول بنجاح!", "teacher_dashboard.html");
                 }
 
                 const teacherSnap = await getDoc(doc(db, "teachers", user));
@@ -162,7 +148,7 @@
                     if (tData.password === pass) {
                         localStorage.setItem('prime_teacher_user', user);
                         localStorage.setItem('prime_teacher_subject', tData.subject);
-                        return showSuccessAndRedirect("أهلاً بك يا أستاذ! جاري التوجيه...", "teacher_only_dashboard.html");
+                        return showSuccessAndRedirect("أهلاً بك يا أستاذ!", "teacher_only_dashboard.html");
                     }
                 }
 
@@ -175,23 +161,29 @@
                     }
 
                     if (sData.password === pass) {
-                        const currentDeviceId = getUniversalDeviceId();
+                        const localToken = localStorage.getItem('prime_session_token');
+                        
+                        // إذا كان الحساب مفتوحاً في مكان آخر وبجلسة نشطة غير معلقة
+                        if (sData.boundDeviceId && sData.boundDeviceId !== localToken) {
+                            return showError("⚠️ هذا الحساب مفتوح حالياً في جهاز آخر! يرجى تسجيل الخروج من الجهاز الأول أولاً.");
+                        }
+
+                        // إنشاء رمز جلسة فريد وجديد
+                        const newSessionToken = 'SESS_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
                         const currentDevInfo = getDeviceInfo();
                         const nowString = new Date().toLocaleString('ar-IQ');
 
-                        if (sData.boundDeviceId && sData.boundDeviceId !== currentDeviceId) {
-                            return showError("⚠️ هذا الحساب مرتبط بجهاز آخر! لا يمكن فتح الحساب من جهازين بنفس الوقت.");
-                        }
-
                         await setDoc(doc(db, "students", user), {
-                            boundDeviceId: currentDeviceId,
+                            boundDeviceId: newSessionToken,
                             lastLoginTime: nowString,
                             lastDeviceInfo: currentDevInfo
                         }, { merge: true });
 
+                        localStorage.setItem('prime_session_token', newSessionToken);
                         localStorage.setItem('prime_student_user', user);
                         localStorage.setItem('prime_student_name', sData.name || user);
-                        return showSuccessAndRedirect("تم تسجيل الدخول بنجاح! جاري التوجيه...", "student_dashboard.html");
+                        
+                        return showSuccessAndRedirect("تم تسجيل الدخول بنجاح!", "student_dashboard.html");
                     }
                 }
 
