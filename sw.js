@@ -1,7 +1,13 @@
-self.addEventListener('install', (e) => {
-  console.log('[Service Worker] Installed');
+const CACHE_NAME = 'prime-cache-v1';
+
+self.addEventListener('install', (event) => {
+    self.skipWaiting();
 });
 
-self.addEventListener('fetch', (e) => {
-  // يتيح تحري السيرفر واستجابة التطبيق المباشرة
+self.addEventListener('activate', (event) => {
+    event.waitUntil(clients.claim());
+});
+
+self.addEventListener('fetch', (event) => {
+    event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
 });
