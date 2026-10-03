@@ -1,0 +1,21 @@
+{
+  "name": "PRIME ACADEMY",
+  "short_name": "PRIME",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#dc3545",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/dc3545/ffffff?text=PRIME",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/dc3545/ffffff?text=PRIME",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
