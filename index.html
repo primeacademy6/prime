@@ -107,6 +107,16 @@
         const err = document.getElementById('errorMsg');
         const succ = document.getElementById('successMsg');
 
+        // جلب أو توليد هويّة فريدة وثابتة للجهاز بدون أن تنمسح مع تسجيل الخروج
+        function getPermanentDeviceId() {
+            let devId = localStorage.getItem('prime_permanent_device_id');
+            if (!devId) {
+                devId = 'DEVICE_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+                localStorage.setItem('prime_permanent_device_id', devId);
+            }
+            return devId;
+        }
+
         function getDeviceInfo() {
             const ua = navigator.userAgent;
             if (ua.includes("Win")) return "حاسوب Windows";
@@ -161,25 +171,28 @@
                     }
 
                     if (sData.password === pass) {
-                        const localToken = localStorage.getItem('prime_session_token');
-                        
-                        // إذا كان الحساب مفتوحاً في مكان آخر وبجلسة نشطة غير معلقة
-                        if (sData.boundDeviceId && sData.boundDeviceId !== localToken) {
-                            return showError("⚠️ هذا الحساب مفتوح حالياً في جهاز آخر! يرجى تسجيل الخروج من الجهاز الأول أولاً.");
-                        }
-
-                        // إنشاء رمز جلسة فريد وجديد
-                        const newSessionToken = 'SESS_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+                        const currentDeviceId = getPermanentDeviceId();
                         const currentDevInfo = getDeviceInfo();
                         const nowString = new Date().toLocaleString('ar-IQ');
 
+                        // 1. إذا كان الحساب مسجلاً ومربوطاً بجهاز سابق، والجهاز الحالي لا يطابق جهاز الحساب المسجل
+                        if (sData.deviceId && sData.deviceId !== currentDeviceId) {
+                            return showError("⚠️ هذا الحساب مفعل ومربوط بجهاز آخر! لا يمكن فتح الاشتراك إلا من الجهاز الرئيسي الأول.");
+                        }
+
+                        // 2. إذا كان الحساب جديداً أو تم عمل إعادة ضبط له، ربطه فوراً بالجهاز الحالي
+                        if (!sData.deviceId) {
+                            await setDoc(doc(db, "students", user), {
+                                deviceId: currentDeviceId
+                            }, { merge: true });
+                        }
+
+                        // تحديث سجل النشاط فقط
                         await setDoc(doc(db, "students", user), {
-                            boundDeviceId: newSessionToken,
                             lastLoginTime: nowString,
                             lastDeviceInfo: currentDevInfo
                         }, { merge: true });
 
-                        localStorage.setItem('prime_session_token', newSessionToken);
                         localStorage.setItem('prime_student_user', user);
                         localStorage.setItem('prime_student_name', sData.name || user);
                         
