@@ -92,7 +92,6 @@
         async function loadAllowedSubjects() {
             const container = document.getElementById('subjectsContainer');
             try {
-                // جلب بيانات الطالب للتعرف على المواد المفعلة له
                 const studentRef = doc(db, "students", currentStudentUser);
                 const studentSnap = await getDoc(studentRef);
 
@@ -104,7 +103,6 @@
                         return;
                     }
 
-                    // جلب جميع تفاصيل المواد من Firestore
                     const subjectsSnap = await getDocs(collection(db, "subjects"));
                     container.innerHTML = "";
 
@@ -112,7 +110,6 @@
                         const subData = docSnap.data();
                         const subName = subData.name || docSnap.id;
 
-                        // عرض المادة فقط إذا كانت مسموحة للطالب
                         if (allowedSubjects.includes(subName)) {
                             const imgUrl = subData.imageUrl || 'https://via.placeholder.com/300x150?text=' + encodeURIComponent(subName);
                             const teacher = subData.teacherName || 'الأستاذ المباشر';
@@ -122,7 +119,7 @@
                                     <img src="${imgUrl}" class="subject-img" alt="${subName}">
                                     <div class="subject-details">
                                         <h3 class="subject-title">${subName}</h3>
-                                        <p class="teacher-name">👨‍🏫 الأستاذ: ${teacher}</p>
+                                        <p class="teacher-name">👨‍‍🏫 الأستاذ: ${teacher}</p>
                                     </div>
                                 </div>
                             `;
@@ -144,8 +141,11 @@
             location.href = 'watch_lecture.html';
         };
 
+        // دالة تسجيل الخروج المعدلة والمضمونة
         window.logout = function() {
-            localStorage.clear();
+            localStorage.removeItem('prime_student_user');
+            localStorage.removeItem('prime_student_name');
+            localStorage.removeItem('prime_selected_subject');
             location.href = 'index.html';
         };
 
