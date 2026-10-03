@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تسجيل الدخول - PRIME ACADEMY</title>
+    
+    <!-- ربط هوية التطبيق PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#dc3545">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192x192/dc3545/ffffff?text=PRIME">
+
     <style>
         :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #1a1a1a; --primary-red: #dc3545; --border-color: #e9ecef; }
         [data-theme="dark"] { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #f1f1f1; --border-color: #2d2d2d; }
@@ -23,6 +31,8 @@
         .btn-red { background: var(--primary-red); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; transition: background 0.2s, opacity 0.2s; }
         .btn-red:hover { background: #b02a37; }
         .btn-red:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .btn-install { background: #198754; color: white; border: none; padding: 10px; width: 100%; border-radius: 8px; font-size: 0.9rem; font-weight: bold; cursor: pointer; margin-top: 15px; display: none; }
 
         .error-msg { color: var(--primary-red); font-weight: bold; font-size: 0.85rem; margin-top: 12px; display: none; }
         .success-msg { color: #198754; font-weight: bold; font-size: 0.85rem; margin-top: 12px; display: none; }
@@ -47,6 +57,8 @@
         </div>
 
         <button class="btn-red" id="submitBtn" onclick="handleLogin()">تسجيل الدخول</button>
+        <button class="btn-install" id="installBtn" onclick="installPWA()">📲 تثبيت تطبيق PRIME ACADEMY</button>
+
         <p id="errorMsg" class="error-msg"></p>
         <p id="successMsg" class="success-msg"></p>
     </div>
@@ -67,42 +79,55 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // تسجيل الـ Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(() => {
+                console.log('App Service Worker Registered');
+            });
+        }
+
+        // إظهار زر التثبيت تلقائياً عند الدعم
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBtn').style.display = 'block';
+        });
+
+        window.installPWA = function() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        document.getElementById('installBtn').style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        };
+
         const loginUser = document.getElementById('loginUser');
         const loginPass = document.getElementById('loginPass');
         const submitBtn = document.getElementById('submitBtn');
         const err = document.getElementById('errorMsg');
         const succ = document.getElementById('successMsg');
 
-        // توليد بصمة جهاز ثابتة للابتوب بدمج مواصفات النظام والشاشة بدون التأثر بمسح LocalStorage
-        function getStableDeviceFingerprint() {
-            const nav = window.navigator;
-            const screen = window.screen;
-            const rawString = [
-                nav.userAgent,
-                nav.platform,
-                screen.width + 'x' + screen.height,
-                screen.colorDepth,
-                nav.hardwareConcurrency || 1
-            ].join('|');
-
-            // تحويل السلسلة إلى Hash بسيط وثابت
-            let hash = 0;
-            for (let i = 0; i < rawString.length; i++) {
-                const char = rawString.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash |= 0;
+        function getUniversalDeviceId() {
+            let devId = localStorage.getItem('prime_universal_device_id');
+            if (!devId) {
+                devId = 'DEV_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+                localStorage.setItem('prime_universal_device_id', devId);
             }
-            return 'DEV_FINGERPRINT_' + Math.abs(hash);
+            return devId;
         }
 
         function getDeviceInfo() {
             const ua = navigator.userAgent;
-            let platform = "جهاز غير معروف";
-            if (ua.includes("Win")) platform = "حاسوب Windows";
-            else if (ua.includes("Mac")) platform = "جهاز Mac";
-            else if (ua.includes("Android")) platform = "هاتف Android";
-            else if (ua.includes("iPhone") || ua.includes("iPad")) platform = "جهاز iOS / iPhone";
-            return platform;
+            if (ua.includes("Win")) return "حاسوب Windows";
+            if (ua.includes("Mac")) return "جهاز Mac";
+            if (ua.includes("Android")) return "هاتف Android";
+            if (ua.includes("iPhone") || ua.includes("iPad")) return "جهاز iOS / iPhone";
+            return "تطبيق هاتف";
         }
 
         [loginUser, loginPass].forEach(input => {
@@ -126,13 +151,11 @@
             submitBtn.innerText = "جاري التحقق والربط...";
 
             try {
-                // 1. حساب الأدمن
                 if (user === 'admin' && pass === '123456') {
                     localStorage.setItem('prime_admin', 'true');
                     return showSuccessAndRedirect("تم تسجيل الدخول بنجاح! جاري التوجيه...", "teacher_dashboard.html");
                 }
 
-                // 2. حسابات المدرسين
                 const teacherSnap = await getDoc(doc(db, "teachers", user));
                 if (teacherSnap.exists()) {
                     const tData = teacherSnap.data();
@@ -143,7 +166,6 @@
                     }
                 }
 
-                // 3. حسابات الطلاب (مع بصمة الجهاز الثابتة)
                 const studentSnap = await getDoc(doc(db, "students", user));
                 if (studentSnap.exists()) {
                     const sData = studentSnap.data();
@@ -153,18 +175,16 @@
                     }
 
                     if (sData.password === pass) {
-                        const currentDevFingerprint = getStableDeviceFingerprint();
+                        const currentDeviceId = getUniversalDeviceId();
                         const currentDevInfo = getDeviceInfo();
                         const nowString = new Date().toLocaleString('ar-IQ');
 
-                        // فحص قفل الجهاز بـ Fingerprint الثابت
-                        if (sData.boundDeviceId && sData.boundDeviceId !== currentDevFingerprint) {
+                        if (sData.boundDeviceId && sData.boundDeviceId !== currentDeviceId) {
                             return showError("⚠️ هذا الحساب مرتبط بجهاز آخر! لا يمكن فتح الحساب من جهازين بنفس الوقت.");
                         }
 
-                        // تسجيل/ربط الجهاز بـ Firestore
                         await setDoc(doc(db, "students", user), {
-                            boundDeviceId: currentDevFingerprint,
+                            boundDeviceId: currentDeviceId,
                             lastLoginTime: nowString,
                             lastDeviceInfo: currentDevInfo
                         }, { merge: true });
