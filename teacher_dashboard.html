@@ -3,98 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة الأستاذ - PRIME ACADEMY</title>
+    <title>لوحة التحكم العامة - PRIME ACADEMY</title>
+    
     <style>
         :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #1a1a1a; --primary-red: #dc3545; --border-color: #e9ecef; }
         [data-theme="dark"] { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #f1f1f1; --border-color: #2d2d2d; }
         
         * { box-sizing: border-box; }
-        body { background: var(--bg-color); color: var(--text-color); font-family: system-ui, sans-serif; margin: 0; direction: rtl; }
+        
+        /* إخفاء مبدئي لمنع الوميض السريع أثناء التحقق من الصلاحيات */
+        body { 
+            background: var(--bg-color); 
+            color: var(--text-color); 
+            font-family: system-ui, -apple-system, sans-serif; 
+            margin: 0; 
+            direction: rtl; 
+            display: none; 
+        }
+
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--card-bg); border-bottom: 1px solid var(--border-color); }
         .brand-logo { font-size: 1.5rem; font-weight: 800; }
         .brand-logo .prime { color: var(--primary-red); }
 
-        .container { max-width: 1000px; margin: 30px auto; padding: 0 15px; }
-        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 15px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        input, select, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 0.95rem; }
 
-        .btn-red { background: var(--primary-red); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-edit { background: #0d6efd; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; margin-left: 5px; }
-        .btn-delete { background: #ff4d4d; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
-        .btn-toggle { background: #ffc107; color: #000; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        .btn-red { background: var(--primary-red); color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .btn-red:hover { background: #b02a37; }
+        
+        .btn-edit { background: #0d6efd; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-delete { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-warn { background: #ffc107; color: #000; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-success { background: #198754; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid var(--border-color); padding: 8px 12px; text-align: right; }
-        th { background: var(--bg-color); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid var(--border-color); padding: 10px; text-align: right; font-size: 0.9rem; }
+        th { background: var(--bg-color); font-weight: bold; }
 
-        .chapter-accordion { border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
-        .chapter-header { background: var(--bg-color); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; border-right: 5px solid var(--primary-red); }
-        .chapter-body { padding: 15px; background: var(--card-bg); display: none; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+        
+        .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        .badge-active { background: #d1e7dd; color: #0f5132; }
+        .badge-disabled { background: #f8d7da; color: #842029; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); }
+        .checkbox-item { display: flex; align-items: center; gap: 5px; font-size: 0.9rem; }
+        .checkbox-item input { width: auto; }
     </style>
+
+    <!-- 🔒 الحماية الفورية ضد الوميض وتأكيد صلاحية الأدمن قبل التحميل -->
+    <script>
+        (function() {
+            const savedAdmin = localStorage.getItem('prime_admin');
+            if (!savedAdmin) {
+                window.location.replace('index.html');
+            } else {
+                document.addEventListener("DOMContentLoaded", function() {
+                    document.body.style.display = "block";
+                });
+            }
+        })();
+    </script>
 </head>
 <body>
 
     <nav class="navbar">
-        <span class="brand-logo"><span class="prime">PRIME</span> ACADEMY - لوحة التدريسي</span>
-        <div>
-            <span id="teacherSubName" style="font-weight: bold; margin-left: 15px; color: var(--primary-red);"></span>
-            <button class="btn-red" onclick="teacherLogout()">تسجيل خروج</button>
-        </div>
+        <span class="brand-logo"><span class="prime">PRIME</span> ACADEMY - إدارة المنصة العامة</span>
+        <button class="btn-red" onclick="adminLogout()">تسجيل خروج</button>
     </nav>
 
     <div class="container">
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- قسم إضافة إدارة المواد والأساتذة -->
+        <div class="grid-2">
+            <!-- 1. إضافة أستاذ جديد -->
             <div class="card">
-                <h3>📂 إنشاء فصل جديد للمادة</h3>
+                <h3>👨‍🏫 إضافة حساب أستاذ جديد</h3>
                 <div class="form-group">
-                    <label>اسم الفصل الجديد:</label>
-                    <input type="text" id="newChapterName" placeholder="مثال: الفصل الأول - الكهربائية">
+                    <label>اسم المستخدم (يوزر الدخول):</label>
+                    <input type="text" id="tUser" placeholder="مثال: teacher_physics">
                 </div>
-                <button class="btn-red" onclick="createChapter()">حفظ الفصل الجديد</button>
+                <div class="form-group">
+                    <label>كلمة المرور:</label>
+                    <input type="text" id="tPass" placeholder="كلمة مرور الأستاذ">
+                </div>
+                <div class="form-group">
+                    <label>اسم المادة المسؤولة:</label>
+                    <input type="text" id="tSubject" placeholder="مثال: الفيزياء - السادس العلمي">
+                </div>
+                <button class="btn-red" onclick="addTeacher()">إضافة الأستاذ</button>
             </div>
 
+            <!-- 2. إضافة مادة جديدة -->
             <div class="card">
-                <h3 id="lecFormTitle">🎬 إضافة حلقة جديدة بداخل فصل</h3>
-                <input type="hidden" id="editLecId">
+                <h3>📚 إضافة مادة دراسية جديدة</h3>
                 <div class="form-group">
-                    <label>اختر الفصل التابع:</label>
-                    <select id="lecChapterSelect"></select>
+                    <label>اسم المادة:</label>
+                    <input type="text" id="subName" placeholder="مثال: الرياضيات">
                 </div>
                 <div class="form-group">
-                    <label>عنوان المحاضرة / الحلقة:</label>
-                    <input type="text" id="lecTitle">
+                    <label>اسم الأستاذ المباشر:</label>
+                    <input type="text" id="subTeacher" placeholder="مثال: أ. أحمد">
                 </div>
                 <div class="form-group">
-                    <label>رابط الفيديو المشفر (Embed Link):</label>
-                    <input type="text" id="lecUrl">
+                    <label>رابط صورة غلاف المادة:</label>
+                    <input type="text" id="subImg" placeholder="رابط صورة الغلاف">
                 </div>
-                <div class="form-group">
-                    <label>وصف المحاضرة:</label>
-                    <textarea id="lecDesc" style="height:60px;"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>رابط الملزمة / PDF المرفق:</label>
-                    <input type="text" id="lecPdf">
-                </div>
-                <button class="btn-red" onclick="saveLecture()">حفظ الحلقة</button>
-                <button class="btn-toggle" id="cancelLecEdit" style="display:none;" onclick="resetLecForm()">إلغاء التعديل</button>
+                <button class="btn-red" onclick="addSubject()">حفظ المادة</button>
             </div>
         </div>
 
+        <!-- قسم إضافة وتفعيل الطلاب -->
         <div class="card">
-            <h3>📋 شجرة الفصول والحلقات المرفوعة لمادتك</h3>
-            <div id="chaptersTreeContainer">جاري تحميل الفصول والحلقات...</div>
+            <h3 id="studentFormTitle">🎓 إضافة / تعديل حساب طالب</h3>
+            <input type="hidden" id="editStudentOriginalUser">
+            <div class="grid-2">
+                <div>
+                    <div class="form-group">
+                        <label>اسم الطالب الكامل:</label>
+                        <input type="text" id="sName" placeholder="مثال: علي حسام">
+                    </div>
+                    <div class="form-group">
+                        <label>اسم المستخدم (اليوزر):</label>
+                        <input type="text" id="sUser" placeholder="مثال: ali2026">
+                    </div>
+                    <div class="form-group">
+                        <label>كلمة المرور:</label>
+                        <input type="text" id="sPass" placeholder="كلمة السر">
+                    </div>
+                </div>
+                <div>
+                    <div class="form-group">
+                        <label>المواد المفعّلة للطالب:</label>
+                        <div class="checkbox-group" id="allowedSubjectsCheckboxes">
+                            <span style="color:#777;">جاري تحميل قائمة المواد...</span>
+                        </div>
+                    </div>
+                    <button class="btn-red" id="saveStudentBtn" onclick="saveStudent()" style="width:100%; margin-top:10px;">حفظ حساب الطالب</button>
+                    <button class="btn-warn" id="cancelStudentEditBtn" onclick="resetStudentForm()" style="width:100%; margin-top:8px; display:none;">إلغاء التعديل</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- قائمة الأساتذة والمواد -->
+        <div class="grid-2">
+            <div class="card">
+                <h3>👨‍🏫 قائمة الأساتذة المسجلين</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اليوزر</th>
+                            <th>المادة</th>
+                            <th>إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teachersTableBody">
+                        <tr><td colspan="3">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>📚 قائمة المواد المتاحة بالمنصة</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اسم المادة</th>
+                            <th>الأستاذ</th>
+                            <th>إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subjectsTableBody">
+                        <tr><td colspan="3">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- جدول إدارة الطلاب الشامل -->
+        <div class="card">
+            <h3>👥 قائمة الطلاب والاشتراكات الأجهزة</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اسم الطالب</th>
+                            <th>اسم المستخدم</th>
+                            <th>كلمة السر</th>
+                            <th>المواد المفعلة</th>
+                            <th>حالة الحساب</th>
+                            <th>معلومات الجهاز المربوط</th>
+                            <th>إجراءات الحساب والجهاز</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody">
+                        <tr><td colspan="7">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getDoc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBApoSZ-HXy9kd07tSJfuRdWkJcrbQVYf0",
@@ -108,203 +225,266 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const currentTeacherSubject = localStorage.getItem('prime_teacher_subject');
-        if (!currentTeacherSubject) { 
-            window.location.replace('index.html');
-        }
+        let allSubjectsList = [];
 
-        document.getElementById('teacherSubName').innerText = "المادة: " + currentTeacherSubject;
+        // 1. جلب وإدارة الأساتذة
+        window.addTeacher = async function() {
+            const user = document.getElementById('tUser').value.trim();
+            const pass = document.getElementById('tPass').value.trim();
+            const sub = document.getElementById('tSubject').value.trim();
 
-        window.createChapter = async function() {
-            const name = document.getElementById('newChapterName').value.trim();
-            if (!name) return alert('يرجى كتابة اسم الفصل!');
+            if (!user || !pass || !sub) return alert('يرجى ملء كافة معلومات الأستاذ!');
 
             try {
-                const chId = currentTeacherSubject + "_" + Date.now();
-                await setDoc(doc(db, "chapters", chId), {
-                    subject: currentTeacherSubject,
-                    name: name,
-                    createdAt: Date.now()
+                await setDoc(doc(db, "teachers", user), {
+                    password: pass,
+                    subject: sub
                 });
-                alert('تم إنشاء الفصل بنجاح!');
-                document.getElementById('newChapterName').value = '';
-                loadMyChaptersAndLectures();
+                alert('تمت إضافة الأستاذ بنجاح!');
+                document.getElementById('tUser').value = '';
+                document.getElementById('tPass').value = '';
+                document.getElementById('tSubject').value = '';
+                loadTeachers();
             } catch (e) { alert('خطأ: ' + e.message); }
         };
 
-        async function loadMyChaptersAndLectures() {
-            const treeBox = document.getElementById('chaptersTreeContainer');
-            const lecChSelect = document.getElementById('lecChapterSelect');
-
-            treeBox.innerHTML = 'جاري التحميل...';
-            lecChSelect.innerHTML = '';
-
-            const qCh = query(collection(db, "chapters"), where("subject", "==", currentTeacherSubject));
-            const chSnap = await getDocs(qCh);
-
-            if (chSnap.empty) {
-                treeBox.innerHTML = '<p style="color:#666;">لا توجد فصول مضافة لهذه المادة بعد. أنشئ فصلاً جديداً أعلاه.</p>';
-                return;
-            }
-
-            treeBox.innerHTML = '';
-
-            const qLec = query(collection(db, "lectures"), where("subject", "==", currentTeacherSubject));
-            const lecSnap = await getDocs(qLec);
-            const lecturesMap = {};
-
-            lecSnap.forEach(d => {
-                const data = d.data();
-                const chName = data.chapter;
-                if (!lecturesMap[chName]) lecturesMap[chName] = [];
-                lecturesMap[chName].push({ id: d.id, ...data });
-            });
-
-            chSnap.forEach(chDoc => {
-                const chData = chDoc.data();
-                const chName = chData.name;
-                const chId = chDoc.id;
-
-                lecChSelect.innerHTML += `<option value="${chName}">${chName}</option>`;
-                const lecs = lecturesMap[chName] || [];
-
-                let lecsTableHtml = '';
-                if (lecs.length > 0) {
-                    lecsTableHtml = `
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>عنوان الحلقة / المحاضرة</th>
-                                    <th>إجراء</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${lecs.map(l => `
-                                    <tr>
-                                        <td>▶ ${l.title}</td>
-                                        <td style="width:120px;">
-                                            <button class="btn-edit" onclick="editLecture('${l.id}')">تعديل</button>
-                                            <button class="btn-delete" onclick="deleteLecture('${l.id}')">حذف</button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+        async function loadTeachers() {
+            const tbody = document.getElementById('teachersTableBody');
+            tbody.innerHTML = '<tr><td colspan="3">جاري التحميل...</td></tr>';
+            try {
+                const snap = await getDocs(collection(db, "teachers"));
+                tbody.innerHTML = '';
+                snap.forEach(d => {
+                    const data = d.data();
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><b>${d.id}</b></td>
+                            <td>${data.subject}</td>
+                            <td><button class="btn-delete" onclick="deleteTeacher('${d.id}')">حذف</button></td>
+                        </tr>
                     `;
-                } else {
-                    lecsTableHtml = '<p style="font-size:0.85rem; color:#888; margin:5px 0;">لا توجد حلقات مضافة داخل هذا الفصل بعد.</p>';
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        window.deleteTeacher = async function(id) {
+            if (confirm(`حذف حساب الأستاذ (${id})؟`)) {
+                await deleteDoc(doc(db, "teachers", id));
+                loadTeachers();
+            }
+        };
+
+        // 2. جلب وإدارة المواد
+        window.addSubject = async function() {
+            const name = document.getElementById('subName').value.trim();
+            const teacher = document.getElementById('subTeacher').value.trim();
+            const img = document.getElementById('subImg').value.trim();
+
+            if (!name) return alert('يرجى كتابة اسم المادة!');
+
+            try {
+                await setDoc(doc(db, "subjects", name), {
+                    name: name,
+                    teacherName: teacher,
+                    imageUrl: img
+                });
+                alert('تمت إضافة المادة بنجاح!');
+                document.getElementById('subName').value = '';
+                document.getElementById('subTeacher').value = '';
+                document.getElementById('subImg').value = '';
+                loadSubjects();
+            } catch (e) { alert('خطأ: ' + e.message); }
+        };
+
+        async function loadSubjects() {
+            const tbody = document.getElementById('subjectsTableBody');
+            const checkboxesBox = document.getElementById('allowedSubjectsCheckboxes');
+            tbody.innerHTML = '<tr><td colspan="3">جاري التحميل...</td></tr>';
+            
+            try {
+                const snap = await getDocs(collection(db, "subjects"));
+                tbody.innerHTML = '';
+                checkboxesBox.innerHTML = '';
+                allSubjectsList = [];
+
+                snap.forEach(d => {
+                    const data = d.data();
+                    const subName = data.name || d.id;
+                    allSubjectsList.push(subName);
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><b>${subName}</b></td>
+                            <td>${data.teacherName || '-'}</td>
+                            <td><button class="btn-delete" onclick="deleteSubject('${d.id}')">حذف</button></td>
+                        </tr>
+                    `;
+
+                    checkboxesBox.innerHTML += `
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="${subName}" class="sub-checkbox"> ${subName}
+                        </label>
+                    `;
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        window.deleteSubject = async function(id) {
+            if (confirm(`حذف مادة (${id})؟`)) {
+                await deleteDoc(doc(db, "subjects", id));
+                loadSubjects();
+            }
+        };
+
+        // 3. جلب وإدارة الطلاب والأجهزة
+        window.saveStudent = async function() {
+            const originalUser = document.getElementById('editStudentOriginalUser').value;
+            const name = document.getElementById('sName').value.trim();
+            const user = document.getElementById('sUser').value.trim();
+            const pass = document.getElementById('sPass').value.trim();
+
+            const selectedSubs = [];
+            document.querySelectorAll('.sub-checkbox:checked').forEach(cb => selectedSubs.push(cb.value));
+
+            if (!user || !pass) return alert('يرجى ملء اسم المستخدم وكلمة السر!');
+
+            try {
+                if (originalUser && originalUser !== user) {
+                    await deleteDoc(doc(db, "students", originalUser));
                 }
 
-                const accHtml = `
-                    <div class="chapter-accordion">
-                        <div class="chapter-header" onclick="toggleAccordion('ch_${chId}')">
-                            <span>📂 ${chName} (${lecs.length} حلقة)</span>
-                            <div>
-                                <button class="btn-edit" onclick="event.stopPropagation(); editChapter('${chId}', '${chName}')">تعديل اسم الفصل</button>
-                                <button class="btn-delete" onclick="event.stopPropagation(); deleteChapter('${chId}')">حذف الفصل</button>
-                            </div>
-                        </div>
-                        <div class="chapter-body" id="ch_${chId}">
-                            ${lecsTableHtml}
-                        </div>
-                    </div>
-                `;
-                treeBox.innerHTML += accHtml;
-            });
-        }
-
-        window.toggleAccordion = function(id) {
-            const el = document.getElementById(id);
-            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-        };
-
-        window.editChapter = async function(chId, oldName) {
-            const newName = prompt("تعديل اسم الفصل:", oldName);
-            if (newName && newName !== oldName) {
-                await updateDoc(doc(db, "chapters", chId), { name: newName });
-                alert('تم تعديل اسم الفصل بنجاح!');
-                loadMyChaptersAndLectures();
-            }
-        };
-
-        window.deleteChapter = async function(chId) {
-            if (confirm("حذف هذا الفصل؟")) {
-                await deleteDoc(doc(db, "chapters", chId));
-                loadMyChaptersAndLectures();
-            }
-        };
-
-        window.saveLecture = async function() {
-            const id = document.getElementById('editLecId').value;
-            const ch = document.getElementById('lecChapterSelect').value;
-            const title = document.getElementById('lecTitle').value.trim();
-            const url = document.getElementById('lecUrl').value.trim();
-            const desc = document.getElementById('lecDesc').value.trim();
-            const pdf = document.getElementById('lecPdf').value.trim();
-
-            if (!ch) return alert('يرجى إنشاء فصل أولاً!');
-            if (!title || !url) return alert('يرجى ملء العنوان والرابط!');
-
-            try {
-                const lecId = id || Date.now().toString();
-                await setDoc(doc(db, "lectures", lecId), {
-                    subject: currentTeacherSubject,
-                    chapter: ch,
-                    title: title,
-                    videoUrl: url,
-                    desc: desc,
-                    pdfUrl: pdf
+                await setDoc(doc(db, "students", user), {
+                    name: name,
+                    password: pass,
+                    allowedSubjects: selectedSubs
                 }, { merge: true });
 
-                alert('تم حفظ الحلقة بنجاح!');
-                resetLecForm();
-                loadMyChaptersAndLectures();
+                alert('تم حفظ بيانات الطالب بنجاح!');
+                resetStudentForm();
+                loadStudents();
             } catch (e) { alert('خطأ: ' + e.message); }
         };
 
-        window.editLecture = async function(id) {
-            const snap = await getDoc(doc(db, "lectures", id));
-            if (snap.exists()) {
-                const d = snap.data();
-                document.getElementById('editLecId').value = id;
-                document.getElementById('lecChapterSelect').value = d.chapter;
-                document.getElementById('lecTitle').value = d.title;
-                document.getElementById('lecUrl').value = d.videoUrl;
-                document.getElementById('lecDesc').value = d.desc || '';
-                document.getElementById('lecPdf').value = d.pdfUrl || '';
-                document.getElementById('lecFormTitle').innerText = "✏️ تعديل الحلقة";
-                document.getElementById('cancelLecEdit').style.display = "inline-block";
+        async function loadStudents() {
+            const tbody = document.getElementById('studentsTableBody');
+            tbody.innerHTML = '<tr><td colspan="7">جاري تحميل بيانات الطلاب...</td></tr>';
+
+            try {
+                const snap = await getDocs(collection(db, "students"));
+                tbody.innerHTML = '';
+
+                snap.forEach(d => {
+                    const data = d.data();
+                    const sUser = d.id;
+                    const allowed = (data.allowedSubjects || []).join(', ') || 'لا توجد';
+                    const isDisabled = data.disabled || false;
+                    const deviceId = data.deviceId || null;
+                    const devInfo = data.lastDeviceInfo || 'غير مسجل بعد';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><b>${data.name || sUser}</b></td>
+                            <td><code>${sUser}</code></td>
+                            <td><code>${data.password}</code></td>
+                            <td><small>${allowed}</small></td>
+                            <td>
+                                <span class="badge ${isDisabled ? 'badge-disabled' : 'badge-active'}">
+                                    ${isDisabled ? 'معطل' : 'نشط'}
+                                </span>
+                            </td>
+                            <td>
+                                <small>${devInfo}</small><br>
+                                <small style="color:#888;">${deviceId ? 'مربوط بجهاز' : 'لم يربط جهاز بعد'}</small>
+                            </td>
+                            <td>
+                                <button class="btn-edit" onclick="editStudent('${sUser}')">تعديل</button>
+                                ${deviceId ? `<button class="btn-warn" onclick="resetDevice('${sUser}')">فك الجهاز</button>` : ''}
+                                <button class="btn-${isDisabled ? 'success' : 'warn'}" onclick="toggleDisable('${sUser}', ${isDisabled})">
+                                    ${isDisabled ? 'تفعيل' : 'تعطيل'}
+                                </button>
+                                <button class="btn-delete" onclick="deleteStudent('${sUser}')">حذف</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        window.editStudent = function(user) {
+            getDocs(collection(db, "students")).then(snap => {
+                snap.forEach(d => {
+                    if (d.id === user) {
+                        const data = d.data();
+                        document.getElementById('editStudentOriginalUser').value = user;
+                        document.getElementById('sName').value = data.name || '';
+                        document.getElementById('sUser').value = user;
+                        document.getElementById('sPass').value = data.password || '';
+
+                        document.querySelectorAll('.sub-checkbox').forEach(cb => {
+                            cb.checked = (data.allowedSubjects || []).includes(cb.value);
+                        });
+
+                        document.getElementById('studentFormTitle').innerText = "✏️ تعديل حساب طالب";
+                        document.getElementById('cancelStudentEditBtn').style.display = 'block';
+                    }
+                });
+            });
+        };
+
+        window.resetStudentForm = function() {
+            document.getElementById('editStudentOriginalUser').value = '';
+            document.getElementById('sName').value = '';
+            document.getElementById('sUser').value = '';
+            document.getElementById('sPass').value = '';
+            document.querySelectorAll('.sub-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('studentFormTitle').innerText = "🎓 إضافة / تعديل حساب طالب";
+            document.getElementById('cancelStudentEditBtn').style.display = 'none';
+        };
+
+        window.resetDevice = async function(user) {
+            if (confirm(`هل تريد فك ربط الجهاز عن الطالب (${user}) لتمكينه من الدخول من جهاز جديد؟`)) {
+                await updateDoc(doc(db, "students", user), {
+                    deviceId: null,
+                    lastDeviceInfo: "تم فك الجهاز بواسطة الإدارة"
+                });
+                alert('تم فك الربط بنجاح!');
+                loadStudents();
             }
         };
 
-        window.resetLecForm = function() {
-            document.getElementById('editLecId').value = '';
-            document.getElementById('lecTitle').value = '';
-            document.getElementById('lecUrl').value = '';
-            document.getElementById('lecDesc').value = '';
-            document.getElementById('lecPdf').value = '';
-            document.getElementById('lecFormTitle').innerText = "🎬 إضافة حلقة جديدة بداخل فصل";
-            document.getElementById('cancelLecEdit').style.display = "none";
+        window.toggleDisable = async function(user, currentStatus) {
+            const nextStatus = !currentStatus;
+            await updateDoc(doc(db, "students", user), {
+                disabled: nextStatus
+            });
+            loadStudents();
         };
 
-        window.deleteLecture = async function(id) {
-            if (confirm('حذف هذه الحلقة؟')) {
-                await deleteDoc(doc(db, "lectures", id));
-                loadMyChaptersAndLectures();
+        window.deleteStudent = async function(user) {
+            if (confirm(`حذف حساب الطالب (${user}) نهائياً؟`)) {
+                await deleteDoc(doc(db, "students", user));
+                loadStudents();
             }
         };
 
-        window.teacherLogout = function() {
+        // تسجيل الخروج الفوري المخصص للأدمن
+        window.adminLogout = function() {
             const permDevId = localStorage.getItem('prime_permanent_device_id');
-            localStorage.removeItem('prime_teacher_user');
-            localStorage.removeItem('prime_teacher_subject');
+            localStorage.removeItem('prime_admin');
             if (permDevId) {
                 localStorage.setItem('prime_permanent_device_id', permDevId);
             }
             window.location.replace('index.html');
         };
 
-        loadMyChaptersAndLectures();
+        // تحميل أولي للبيانات
+        async function initDashboard() {
+            await loadSubjects();
+            await loadTeachers();
+            await loadStudents();
+        }
+
+        initDashboard();
     </script>
 </body>
 </html>
