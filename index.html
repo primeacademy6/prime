@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PRIME ACADEMY</title>
     
+    <!-- ربط هوية التطبيق PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#dc3545">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="./logo.jpg">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3429/3429149.png">
 
     <style>
         :root { --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #1a1a1a; --primary-red: #dc3545; --border-color: #e9ecef; }
@@ -20,7 +21,7 @@
 
         .card-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 30px; width: 100%; max-width: 420px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; }
         
-        .brand-logo-img { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 2px solid var(--border-color); }
+        .brand-logo-img { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 2px solid var(--border-color); display: inline-block; }
         .brand-logo { font-size: 2rem; font-weight: 800; margin-bottom: 10px; }
         .brand-logo .prime { color: var(--primary-red); }
 
@@ -47,8 +48,9 @@
 </head>
 <body>
 
+    <!-- 1. الشاشة الترحيبية -->
     <div class="card-box" id="landingScreen">
-        <img src="./logo.jpg" alt="PRIME ACADEMY" class="brand-logo-img" onerror="this.style.display='none'">
+        <img src="logo.jpg" alt="PRIME ACADEMY" class="brand-logo-img" id="mainLogoImg" onerror="handleImgError(this)">
         <div class="brand-logo">
             <span class="prime">PRIME</span> ACADEMY
         </div>
@@ -63,8 +65,9 @@
         </button>
     </div>
 
+    <!-- 2. واجهة تسجيل الدخول -->
     <div class="card-box" id="loginScreen" style="display: none;">
-        <img src="./logo.jpg" alt="PRIME ACADEMY" class="brand-logo-img" style="width:80px; height:80px; margin-bottom:10px;" onerror="this.style.display='none'">
+        <img src="logo.jpg" alt="PRIME ACADEMY" class="brand-logo-img" id="loginLogoImg" style="width:80px; height:80px; margin-bottom:10px;" onerror="handleImgError(this)">
         <div class="brand-logo" style="font-size:1.8rem;">
             <span class="prime">PRIME</span> ACADEMY
         </div>
@@ -87,6 +90,7 @@
         <p id="successMsg" class="success-msg"></p>
     </div>
 
+    <!-- نافذة الإرشادات -->
     <div class="install-modal" id="installModal">
         <div class="install-box">
             <h3 id="modalTitle" style="margin-top:0; color:var(--primary-red); text-align:center;">📲 طريقة تثبيت التطبيق</h3>
@@ -114,12 +118,23 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // معالجة خطأ تحميل الصورة لضمان إظهار أيقونة أكاديمية بديلة دائماً
+        window.handleImgError = function(img) {
+            img.onerror = null;
+            img.src = 'https://cdn-icons-png.flaticon.com/512/3429/3429149.png';
+        };
+
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(()=>{});
         }
 
+        // الكشف الدقيق والشامل عن وضعية الـ PWA والتطبيقات المثبتة بـ iOS والـ Android
         window.addEventListener('DOMContentLoaded', () => {
-            const isPWA = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone || document.referrer.includes('android-app://');
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+                              || window.navigator.standalone 
+                              || document.referrer.includes('android-app://')
+                              || window.location.search.includes('mode=pwa');
+
             const savedStudentUser = localStorage.getItem('prime_student_user');
             const savedTeacherUser = localStorage.getItem('prime_teacher_user');
             const savedAdmin = localStorage.getItem('prime_admin');
@@ -137,7 +152,8 @@
                 return;
             }
 
-            if (isPWA) {
+            // إذا تم فتح التطبيق المثبت -> يتجاوز شاشة التثبيت فوراً لصفحة الدخول
+            if (isStandalone) {
                 showLoginScreen();
                 const backBtn = document.getElementById('backToLandingBtn');
                 if (backBtn) backBtn.style.display = 'none';
