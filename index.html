@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PRIME ACADEMY</title>
     
-    <!-- ربط هوية التطبيق PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#dc3545">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -48,7 +47,6 @@
 </head>
 <body>
 
-    <!-- 1. الشاشة الترحيبية الأولى (تظهر بالمتصفح العادي) -->
     <div class="card-box" id="landingScreen">
         <img src="./logo.jpg" alt="PRIME ACADEMY" class="brand-logo-img" onerror="this.style.display='none'">
         <div class="brand-logo">
@@ -65,7 +63,6 @@
         </button>
     </div>
 
-    <!-- 2. واجهة تسجيل الدخول -->
     <div class="card-box" id="loginScreen" style="display: none;">
         <img src="./logo.jpg" alt="PRIME ACADEMY" class="brand-logo-img" style="width:80px; height:80px; margin-bottom:10px;" onerror="this.style.display='none'">
         <div class="brand-logo" style="font-size:1.8rem;">
@@ -90,7 +87,6 @@
         <p id="successMsg" class="success-msg"></p>
     </div>
 
-    <!-- نافذة إرشادات التثبيت -->
     <div class="install-modal" id="installModal">
         <div class="install-box">
             <h3 id="modalTitle" style="margin-top:0; color:var(--primary-red); text-align:center;">📲 طريقة تثبيت التطبيق</h3>
@@ -122,31 +118,29 @@
             navigator.serviceWorker.register('sw.js').catch(()=>{});
         }
 
-        // 🟢 1. التحقق التلقائي عند فتح الصفحة: هل فُتحت من التطبيق المثبت أو أن الطالب مسجل مسبقاً؟
         window.addEventListener('DOMContentLoaded', () => {
             const isPWA = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone || document.referrer.includes('android-app://');
             const savedStudentUser = localStorage.getItem('prime_student_user');
             const savedTeacherUser = localStorage.getItem('prime_teacher_user');
             const savedAdmin = localStorage.getItem('prime_admin');
 
-            // إذا كان مسجلاً مسبقاً -> توجيه مباشر للوحة الخاصة به
             if (savedStudentUser) {
-                location.href = 'student_dashboard.html';
+                location.replace('student_dashboard.html');
                 return;
             }
             if (savedTeacherUser) {
-                location.href = 'teacher_only_dashboard.html';
+                location.replace('teacher_only_dashboard.html');
                 return;
             }
             if (savedAdmin) {
-                location.href = 'teacher_dashboard.html';
+                location.replace('teacher_dashboard.html');
                 return;
             }
 
-            // إذا فُتح من التطبيق المثبت -> تحويل مباشر لصفحة كتابة اليوزر والباسورد
             if (isPWA) {
                 showLoginScreen();
-                document.getElementById('backToLandingBtn').style.display = 'none'; // إخفاء زر الرجوع بالتطبيق
+                const backBtn = document.getElementById('backToLandingBtn');
+                if (backBtn) backBtn.style.display = 'none';
             }
         });
 
@@ -315,7 +309,7 @@
             succ.innerText = msg;
             succ.style.display = 'block';
             submitBtn.innerText = "تم الدخول بنجاح ✔️";
-            setTimeout(() => { location.href = page; }, 600);
+            setTimeout(() => { location.replace(page); }, 600);
         }
 
         function showError(msg) {
