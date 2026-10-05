@@ -1,7 +1,7 @@
 {
   "name": "PRIME ACADEMY",
   "short_name": "PRIME",
-  "start_url": "./index.html",
+  "start_url": "./index.html?mode=pwa",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#dc3545",
