@@ -24,7 +24,7 @@
             font-family: system-ui, -apple-system, sans-serif; 
             margin: 0; 
             direction: rtl; 
-            display: none; 
+            display: flex; 
             justify-content: center; 
             align-items: center; 
             min-height: 100vh; 
@@ -54,29 +54,10 @@
         .install-box { background: var(--card-bg); padding: 25px; border-radius: 16px; max-width: 380px; text-align: right; box-shadow: 0 10px 30px rgba(0,0,0,0.3); direction: rtl; }
         .step-item { background: var(--bg-color); padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; font-size: 0.88rem; border-right: 3px solid var(--primary-red); line-height: 1.5; }
     </style>
-
-    <script>
-        (function() {
-            const savedStudentUser = localStorage.getItem('prime_student_user');
-            const savedTeacherUser = localStorage.getItem('prime_teacher_user');
-            const savedAdmin = localStorage.getItem('prime_admin');
-
-            if (savedStudentUser) {
-                window.location.replace('student_dashboard.html');
-            } else if (savedTeacherUser) {
-                window.location.replace('teacher_only_dashboard.html');
-            } else if (savedAdmin) {
-                window.location.replace('teacher_dashboard.html');
-            } else {
-                document.addEventListener("DOMContentLoaded", function() {
-                    document.body.style.display = "flex";
-                });
-            }
-        })();
-    </script>
 </head>
 <body>
 
+    <!-- 1. الشاشة الترحيبية (تظهر بالمتصفح العادي فقط) -->
     <div class="card-box" id="landingScreen">
         <img src="./logo.jpg" alt="PRIME ACADEMY" class="brand-logo-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3429/3429149.png'">
         <div class="brand-logo">
@@ -84,15 +65,16 @@
         </div>
         <p class="sub-title">أهلاً بك في منصة PRIME ACADEMY التعليمية.<br>اختر طريقة الاستخدام المفضلة لديك:</p>
 
-        <button class="btn-main" onclick="handleInstallClick()">
+        <button class="btn-main" id="installBtn">
             📲 تثبيت التطبيق على جهازك
         </button>
         
-        <button class="btn-outline" onclick="showLoginScreen()">
+        <button class="btn-outline" id="webContinueBtn">
             🌐 الاستمرار عبر الويب
         </button>
     </div>
 
+    <!-- 2. واجهة تسجيل الدخول (تظهر تلقائياً في التطبيق المثبت) -->
     <div class="card-box" id="loginScreen" style="display: none;">
         <img src="./logo.jpg" alt="PRIME ACADEMY" class="brand-logo-img" style="width:75px; height:75px; margin-bottom:10px;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3429/3429149.png'">
         <div class="brand-logo" style="font-size:1.8rem;">
@@ -110,13 +92,14 @@
             <input type="password" id="loginPass" placeholder="اكتب كلمة المرور...">
         </div>
 
-        <button class="btn-main" id="submitBtn" onclick="handleLogin()">تسجيل الدخول</button>
-        <button class="btn-outline" id="backToLandingBtn" style="margin-top: 8px;" onclick="showLandingScreen()">← الرجوع للخلف</button>
+        <button class="btn-main" id="submitBtn">تسجيل الدخول</button>
+        <button class="btn-outline" id="backToLandingBtn" style="margin-top: 8px;">← الرجوع للخلف</button>
 
         <p id="errorMsg" class="error-msg"></p>
         <p id="successMsg" class="success-msg"></p>
     </div>
 
+    <!-- نافذة إرشادات التثبيت -->
     <div class="install-modal" id="installModal">
         <div class="install-box">
             <h3 id="modalTitle" style="margin-top:0; color:var(--primary-red); text-align:center;">📲 طريقة تثبيت التطبيق</h3>
@@ -124,7 +107,7 @@
 
             <div id="stepsContainer"></div>
 
-            <button class="btn-main" style="margin-top:20px; padding:12px;" onclick="closeInstallModal()">فهمت ذلك، استمرار لصفحة الدخول</button>
+            <button class="btn-main" id="closeInstallBtn" style="margin-top:20px; padding:12px;">فهمت ذلك، استمرار لصفحة الدخول</button>
         </div>
     </div>
 
@@ -144,17 +127,65 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // تسجيل خدمة الـ PWA الكاش
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(()=>{});
         }
 
-        const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || window.location.search.includes('mode=pwa');
-        if (isPWA) {
-            showLoginScreen();
-            const backBtn = document.getElementById('backToLandingBtn');
-            if (backBtn) backBtn.style.display = 'none';
-        }
+        // إظهار وإخفاء الواجهات
+        window.showLoginScreen = function() {
+            document.getElementById('landingScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'block';
+        };
+
+        window.showLandingScreen = function() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('landingScreen').style.display = 'block';
+        };
+
+        window.closeInstallModal = function() {
+            document.getElementById('installModal').style.display = 'none';
+            window.showLoginScreen();
+        };
+
+        // التحقق التلقائي المباشر
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedStudentUser = localStorage.getItem('prime_student_user');
+            const savedTeacherUser = localStorage.getItem('prime_teacher_user');
+            const savedAdmin = localStorage.getItem('prime_admin');
+
+            // 1. التوجيه المباشر إذا كان الطالب مسجلاً مسبقاً
+            if (savedStudentUser) {
+                location.replace('student_dashboard.html');
+                return;
+            }
+            if (savedTeacherUser) {
+                location.replace('teacher_only_dashboard.html');
+                return;
+            }
+            if (savedAdmin) {
+                location.replace('teacher_dashboard.html');
+                return;
+            }
+
+            // 2. الكشف عن التطبيق المثبت (Standalone/PWA) وتحويله فوراً لصفحة الدخول بدون عرض خيارات التثبيت
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches 
+                       || window.navigator.standalone 
+                       || document.referrer.includes('android-app://') 
+                       || window.location.search.includes('mode=pwa');
+
+            if (isPWA) {
+                window.showLoginScreen();
+                const backBtn = document.getElementById('backToLandingBtn');
+                if (backBtn) backBtn.style.display = 'none';
+            }
+        });
+
+        // ربط أزرار الواجهة
+        document.getElementById('webContinueBtn').addEventListener('click', () => window.showLoginScreen());
+        document.getElementById('backToLandingBtn').addEventListener('click', () => window.showLandingScreen());
+        document.getElementById('closeInstallBtn').addEventListener('click', () => window.closeInstallModal());
+        document.getElementById('installBtn').addEventListener('click', () => window.handleInstallClick());
+        document.getElementById('submitBtn').addEventListener('click', () => window.handleLogin());
 
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -167,7 +198,7 @@
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
-                        showLoginScreen();
+                        window.showLoginScreen();
                     }
                     deferredPrompt = null;
                 });
@@ -183,7 +214,7 @@
                 container.innerHTML = `
                     <div class="step-item"><b>1.</b> اضغط على زر <b>المشاركة (Share ⎋)</b> أسفل متصفح Safari.</div>
                     <div class="step-item"><b>2.</b> انزل للأسفل واختر <b>إضافة إلى الشاشة الرئيسية (Add to Home Screen)</b>.</div>
-                    <div class="step-item"><b>3.</b> اضغط على <b>إضافة</b> بالأعلى ليظهر التطبيق فوراً بشاشتك وبشعار الأكاديمية!</div>
+                    <div class="step-item"><b>3.</b> اضغط على <b>إضافة</b> بالأعلى ليظهر تطبيق PRIME ACADEMY فوراً بشاشتك!</div>
                 `;
             } else {
                 document.getElementById('modalTitle').innerText = "📲 تثبيت التطبيق على Android";
@@ -195,21 +226,6 @@
             }
 
             document.getElementById('installModal').style.display = 'flex';
-        };
-
-        window.closeInstallModal = function() {
-            document.getElementById('installModal').style.display = 'none';
-            showLoginScreen();
-        };
-
-        window.showLoginScreen = function() {
-            document.getElementById('landingScreen').style.display = 'none';
-            document.getElementById('loginScreen').style.display = 'block';
-        };
-
-        window.showLandingScreen = function() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('landingScreen').style.display = 'block';
         };
 
         const loginUser = document.getElementById('loginUser');
@@ -238,7 +254,7 @@
 
         [loginUser, loginPass].forEach(input => {
             input.addEventListener('keyup', (e) => {
-                if (e.key === 'Enter' || e.keyCode === 13) { handleLogin(); }
+                if (e.key === 'Enter' || e.keyCode === 13) { window.handleLogin(); }
             });
         });
 
