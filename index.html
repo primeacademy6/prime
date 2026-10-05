@@ -16,14 +16,24 @@
         [data-theme="dark"] { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #f1f1f1; --border-color: #2d2d2d; }
 
         * { box-sizing: border-box; }
-        body { background: var(--bg-color); color: var(--text-color); font-family: system-ui, -apple-system, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; direction: rtl; }
+        
+        /* إخفاء الصفحة مبدئياً لمنع الوميض السريع أثناء الفحص */
+        body { 
+            background: var(--bg-color); 
+            color: var(--text-color); 
+            font-family: system-ui, -apple-system, sans-serif; 
+            margin: 0; 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            direction: rtl; 
+        }
 
         .card-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 30px; width: 100%; max-width: 420px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); text-align: center; }
-        
         .brand-logo-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 2px solid var(--border-color); }
         .brand-logo { font-size: 2rem; font-weight: 800; margin-bottom: 10px; }
         .brand-logo .prime { color: var(--primary-red); }
-
         .sub-title { color: #666; font-size: 0.95rem; margin-bottom: 25px; line-height: 1.5; }
 
         .btn-main { background: var(--primary-red); color: white; border: none; padding: 14px; width: 100%; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s; }
@@ -34,7 +44,7 @@
 
         .form-group { margin-bottom: 15px; text-align: right; }
         label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
-        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 1rem; transition: border-color 0.2s; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 1rem; }
         input:focus { outline: none; border-color: var(--primary-red); }
 
         .error-msg { color: var(--primary-red); font-weight: bold; font-size: 0.85rem; margin-top: 12px; display: none; }
@@ -44,6 +54,28 @@
         .install-box { background: var(--card-bg); padding: 25px; border-radius: 16px; max-width: 380px; text-align: right; box-shadow: 0 10px 30px rgba(0,0,0,0.3); direction: rtl; }
         .step-item { background: var(--bg-color); padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; font-size: 0.88rem; border-right: 3px solid var(--primary-red); line-height: 1.5; }
     </style>
+
+    <!-- سكربت فحص فوري وسريع قبل إظهار عناصر الصفحة -->
+    <script>
+        (function() {
+            const savedStudentUser = localStorage.getItem('prime_student_user');
+            const savedTeacherUser = localStorage.getItem('prime_teacher_user');
+            const savedAdmin = localStorage.getItem('prime_admin');
+
+            if (savedStudentUser) {
+                window.location.replace('student_dashboard.html');
+            } else if (savedTeacherUser) {
+                window.location.replace('teacher_only_dashboard.html');
+            } else if (savedAdmin) {
+                window.location.replace('teacher_dashboard.html');
+            } else {
+                // إذا لم يكن هناك تسجيل دخول، يتم إظهار الصفحة بسلاسة
+                document.addEventListener("DOMContentLoaded", function() {
+                    document.body.style.display = "flex";
+                });
+            }
+        })();
+    </script>
 </head>
 <body>
 
@@ -118,31 +150,12 @@
             navigator.serviceWorker.register('sw.js').catch(()=>{});
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedStudentUser = localStorage.getItem('prime_student_user');
-            const savedTeacherUser = localStorage.getItem('prime_teacher_user');
-            const savedAdmin = localStorage.getItem('prime_admin');
-
-            if (savedStudentUser) {
-                location.href = 'student_dashboard.html';
-                return;
-            }
-            if (savedTeacherUser) {
-                location.href = 'teacher_only_dashboard.html';
-                return;
-            }
-            if (savedAdmin) {
-                location.href = 'teacher_dashboard.html';
-                return;
-            }
-
-            const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-            if (isPWA) {
-                showLoginScreen();
-                const backBtn = document.getElementById('backToLandingBtn');
-                if (backBtn) backBtn.style.display = 'none';
-            }
-        });
+        const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        if (isPWA) {
+            showLoginScreen();
+            const backBtn = document.getElementById('backToLandingBtn');
+            if (backBtn) backBtn.style.display = 'none';
+        }
 
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -169,16 +182,16 @@
             if (isIOS) {
                 document.getElementById('modalTitle').innerText = "📲 تثبيت التطبيق على iPhone";
                 container.innerHTML = `
-                    <div class="step-item"><b>1.</b> اضغط على زر <b>المشاركة (Share ⎋)</b> أو الثلاث نقاط أعلى/أسفل المتصفح.</div>
-                    <div class="step-item"><b>2.</b> اختر <b>إضافة إلى الشاشة الرئيسية</b> (Add to Home Screen).</div>
-                    <div class="step-item"><b>3.</b> اضغط على كلمة <b>إضافة</b> بالأعلى ليظهر تطبيق PRIME ACADEMY فوراً على شاشتك!</div>
+                    <div class="step-item"><b>1.</b> اضغط على زر <b>المشاركة (Share ⎋)</b> أسفل الشاشة.</div>
+                    <div class="step-item"><b>2.</b> اختر <b>إضافة إلى الشاشة الرئيسية (Add to Home Screen)</b>.</div>
+                    <div class="step-item"><b>3.</b> اضغط على <b>إضافة</b> بالأعلى ليظهر تطبيق PRIME ACADEMY فوراً!</div>
                 `;
             } else {
                 document.getElementById('modalTitle').innerText = "📲 تثبيت التطبيق على Android";
                 container.innerHTML = `
-                    <div class="step-item"><b>1.</b> اضغط على قائمة المتصفح (الثلاث نقاط <b>⋮</b>) بأعلى الشاشة.</div>
-                    <div class="step-item"><b>2.</b> اضغط على خيار <b>تثبيت التطبيق</b> أو <b>إضافة إلى الشاشة الرئيسية</b>.</div>
-                    <div class="step-item"><b>3.</b> اضغط على <b>إضافة تلقائياً</b> لتثبيت التطبيق بملف قائم بذاته.</div>
+                    <div class="step-item"><b>1.</b> اضغط على قائمة المتصفح (الثلاث نقاط <b>⋮</b>) بالأعلى.</div>
+                    <div class="step-item"><b>2.</b> اختر <b>تثبيت التطبيق</b> أو <b>إضافة إلى الشاشة الرئيسية</b>.</div>
+                    <div class="step-item"><b>3.</b> اضغط على <b>إضافة تلقائياً</b> لتثبيت التطبيق.</div>
                 `;
             }
 
@@ -307,7 +320,7 @@
             succ.innerText = msg;
             succ.style.display = 'block';
             submitBtn.innerText = "تم الدخول بنجاح ✔️";
-            setTimeout(() => { location.href = page; }, 400);
+            setTimeout(() => { location.replace(page); }, 300);
         }
 
         function showError(msg) {
