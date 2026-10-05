@@ -55,7 +55,7 @@
         <span class="brand-logo"><span class="prime">PRIME</span> ACADEMY</span>
         <div>
             <span id="studentWelcome" style="margin-left: 15px; font-weight: bold;"></span>
-            <button class="btn-logout" onclick="logout()">تسجيل خروج</button>
+            <button class="btn-logout" id="logoutBtn" onclick="logout()">تسجيل خروج</button>
         </div>
     </nav>
 
@@ -84,7 +84,7 @@
 
         const currentStudentUser = localStorage.getItem('prime_student_user');
         if (!currentStudentUser) {
-            location.href = 'index.html';
+            location.replace('index.html');
         }
 
         document.getElementById('studentWelcome').innerText = "الطالب: " + (localStorage.getItem('prime_student_name') || currentStudentUser);
@@ -141,12 +141,18 @@
             location.href = 'watch_lecture.html';
         };
 
-        // تسجيل الخروج الآمن (يمسح بيانات الجلسة فقط ويترك معرف الجهاز)
         window.logout = function() {
+            const permDevId = localStorage.getItem('prime_permanent_device_id');
+            
             localStorage.removeItem('prime_student_user');
             localStorage.removeItem('prime_student_name');
             localStorage.removeItem('prime_selected_subject');
-            location.href = 'index.html';
+
+            if (permDevId) {
+                localStorage.setItem('prime_permanent_device_id', permDevId);
+            }
+
+            window.location.replace('index.html');
         };
 
         loadAllowedSubjects();
